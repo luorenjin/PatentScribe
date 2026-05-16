@@ -1,10 +1,11 @@
 import Database from "@tauri-apps/plugin-sql";
-import { Store } from "@tauri-apps/plugin-store";
+import { LazyStore } from "@tauri-apps/plugin-store";
 import { AppSettings, WorkbenchRecord } from "../types/patent";
 
 // --- Configuration Storage (Tauri Store) ---
+// In Tauri v2, LazyStore handles the asynchronous loading of the resource ID automatically.
 const SETTINGS_FILE = ".settings.dat";
-const store = new Store(SETTINGS_FILE);
+const store = new LazyStore(SETTINGS_FILE);
 
 export async function loadSettings(): Promise<AppSettings | null> {
   try {

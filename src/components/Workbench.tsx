@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { WorkbenchRecord } from '../types/patent';
-import { FileText, Trash2, ExternalLink, Calendar, Search, Tag, Archive, Settings } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { FileText, Trash2, ExternalLink, Calendar, Search, Tag, Archive } from 'lucide-react';
 
 interface WorkbenchProps {
   records: WorkbenchRecord[];

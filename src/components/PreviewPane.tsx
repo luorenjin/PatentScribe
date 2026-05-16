@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FileText, Edit2, Check, X, Loader2, ImagePlus, Plus } from 'lucide-react';
 import { PatentDisclosure, AppSettings } from '../types/patent';
-import { exportToPdf } from '../lib/exportUtils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, FileUp, Zap, FileText, Layout, CheckCircle, ImagePlus } from 'lucide-react';
+import { FileUp, Zap, Layout, ImagePlus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import mammoth from 'mammoth';
 import { Logo } from './Logo';

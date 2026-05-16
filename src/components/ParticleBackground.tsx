@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { motion, useSpring, useMotionValue } from 'motion/react';
+import { useEffect, useRef } from 'react';
+import { useSpring, useMotionValue } from 'motion/react';
 
 interface Particle {
   id: number;

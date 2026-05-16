@@ -7,7 +7,7 @@ PatentScribe 是一款基于 AI 的专利技术交底书协作工具，旨在协
 - **核心功能**: 多模态专利草稿分析、专利挖掘诊断报告（新颖性/创造性/实用性评估）、结构化交底书生成（包含附图说明、实施例、权利要求图谱）、版本管理及工作台存档。
 - **技术栈**: 
   - **前端**: React 19, TypeScript, Vite, Tailwind CSS, Framer Motion.
-  - **后端**: Rust (Tauri 1.5).
+  - **后端**: Rust (Tauri 2.0).
   - **AI 引擎**: Google Gemini (主要), OpenAI GPT-4o, 阿里通义千问 (Qwen).
   - **文档处理**: docx, jspdf, mammoth, pdfjs-dist.
 
@@ -27,16 +27,17 @@ PatentScribe 是一款基于 AI 的专利技术交底书协作工具，旨在协
 - Node.js (建议 v18+)
 - Rust 环境 (用于 Tauri 编译)
 
-### 常用命令
-- **安装依赖**: `npm install`
-- **启动网页版预览**: `npm run dev` (访问 http://localhost:3000)
-- **启动 Tauri 桌面应用**: `npm run tauri dev`
-- **构建前端产物**: `npm run build`
-- **构建桌面安装包**: `npm run tauri build`
-- **类型检查**: `npm run lint`
+### 常用命令 (Preferred: yarn)
+- **安装依赖**: `yarn`
+- **启动网页版预览**: `yarn dev` (访问 http://localhost:3000)
+- **启动 Tauri 桌面应用**: `yarn tauri dev`
+- **构建前端产物**: `yarn build`
+- **构建桌面安装包**: `yarn tauri build`
+- **类型检查**: `yarn lint`
 
 ## 开发约定 (Development Conventions)
 
+- **构建工具**: 本项目统一使用 `yarn` 作为包管理和构建工具。
 - **AI 交互**: 所有的 AI 提示词（Prompts）和 Schema 定义集中在 `src/lib/aiService.ts`。修改 AI 行为请优先调整 `SYSTEM_PROMPT`。
 - **样式**: 使用 Tailwind CSS 4.x 进行样式开发，遵循 Vanilla CSS 优先原则。
 - **状态管理**: 使用 React `useState` 和 `useEffect` 进行简单的本地状态管理，重要数据同步至 `localStorage`。

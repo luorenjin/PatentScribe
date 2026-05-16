@@ -1,60 +1,54 @@
 {
+  "productName": "PatentScribe",
+  "version": "0.1.0-beta",
+  "identifier": "com.patentscribe.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist"
+    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "yarn build",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "PatentScribe",
-    "version": "1.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "dialog": {
-        "all": true
-      },
-      "fs": {
-        "all": true,
-        "scope": ["$APPCONFIG/*", "$DOCUMENT/*"]
-      },
-      "notification": {
-        "all": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "Copyright © 2026 PatentScribe",
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "com.patentscribe.app",
-      "longDescription": "An AI-powered patent disclosure tool.",
-      "shortDescription": "PatentScribe Desktop",
-      "targets": "all"
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
     "windows": [
       {
+        "label": "main",
         "fullscreen": false,
         "height": 800,
         "resizable": true,
         "title": "PatentScribe - AI 专利协作专家",
         "width": 1200
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "Copyright © 2026 PatentScribe",
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "longDescription": "An AI-powered patent disclosure tool.",
+    "shortDescription": "PatentScribe Desktop",
+    "targets": "all"
+  },
+  "plugins": {
+    "sql": null,
+    "store": null,
+    "shell": {
+      "open": true
+    },
+    "dialog": null,
+    "notification": null,
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
   }
 }

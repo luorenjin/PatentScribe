@@ -19,6 +19,7 @@ import { Brain, Cpu, MessageSquare, Save, CheckCircle, Archive, Plus, Settings }
 import { Logo } from './components/Logo';
 import { cn } from './lib/utils';
 import { WorkbenchRecord, AppSettings } from './types/patent';
+import { loadSettings, saveSettings, loadWorkbenchRecords, saveWorkbenchRecord, deleteWorkbenchRecord } from './lib/storage';
 
 const INITIAL_SETTINGS: AppSettings = {
   llmProvider: 'google',
@@ -51,43 +52,29 @@ export default function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = React.useState(false);
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'saved'>('idle');
 
-  // Initialize Workbench and Settings from localStorage
+  // Initialize Workbench and Settings from native storage
   React.useEffect(() => {
-    const savedWorkbench = localStorage.getItem('patent_scribe_workbench');
-    if (savedWorkbench) {
-      try {
-        setWorkbenchRecords(JSON.parse(savedWorkbench));
-      } catch (e) {
-        console.error("Failed to parse workbench records", e);
-      }
-    }
-
-    const savedSettings = localStorage.getItem('patent_scribe_settings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        // Merge with initial settings to ensure all required fields are present
+    async function initStorage() {
+      // 1. Load Settings from Store
+      const savedSettings = await loadSettings();
+      if (savedSettings) {
         setState(prev => ({ 
           ...prev, 
-          settings: { ...INITIAL_SETTINGS, ...parsedSettings } 
+          settings: { ...INITIAL_SETTINGS, ...savedSettings } 
         }));
-      } catch (e) {
-        console.error("Failed to parse settings", e);
       }
+
+      // 2. Load Workbench from SQLite
+      const records = await loadWorkbenchRecords();
+      setWorkbenchRecords(records);
     }
+
+    initStorage();
   }, []);
 
-  // Sync to localStorage
-  React.useEffect(() => {
-    localStorage.setItem('patent_scribe_workbench', JSON.stringify(workbenchRecords));
-  }, [workbenchRecords]);
-
-  React.useEffect(() => {
-    localStorage.setItem('patent_scribe_settings', JSON.stringify(state.settings));
-  }, [state.settings]);
-
-  const handleUpdateSettings = (settings: AppSettings) => {
+  const handleUpdateSettings = async (settings: AppSettings) => {
     setState(prev => ({ ...prev, settings }));
+    await saveSettings(settings);
   };
 
   const handleSaveVersion = (label?: string) => {
@@ -115,7 +102,7 @@ export default function App() {
     addMessage('system', `🔙 **已回滚至版本:** ${version.label || '自动保存点'} (${new Date(version.timestamp).toLocaleString()})`);
   };
 
-  const handleSaveToWorkbench = () => {
+  const handleSaveToWorkbench = async () => {
     if (!state.currentDisclosure || !state.diagnosisReport) return;
 
     setSaveStatus('saving');
@@ -129,6 +116,7 @@ export default function App() {
     };
 
     setWorkbenchRecords(prev => [newRecord, ...prev]);
+    await saveWorkbenchRecord(newRecord);
     
     // Artificial delay for feedback
     setTimeout(() => {
@@ -137,8 +125,9 @@ export default function App() {
     }, 600);
   };
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
     setWorkbenchRecords(prev => prev.filter(r => r.id !== id));
+    await deleteWorkbenchRecord(id);
   };
 
   const handleLoadRecord = (record: WorkbenchRecord) => {

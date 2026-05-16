@@ -326,7 +326,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
                     <ShieldCheck size={12} />
                   </div>
                   <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
-                    <span className="font-bold underline">安全说明</span>：API Key 仅本地加密存储（LocalStorage）。建议在桌面端分发时使用个人限制额度的 Key 以保证账户安全。
+                    <span className="font-bold underline">安全说明</span>：API Key 已通过 Tauri Store 安全地存储在您的本地文件系统中，不再依赖浏览器的 LocalStorage。
                   </p>
                 </div>
               </section>

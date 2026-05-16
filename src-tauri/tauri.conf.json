@@ -1,6 +1,6 @@
 {
   "productName": "PatentScribe",
-  "version": "0.1.0-beta",
+  "version": "../package.json",
   "identifier": "com.patentscribe.app",
   "build": {
     "beforeDevCommand": "yarn dev",

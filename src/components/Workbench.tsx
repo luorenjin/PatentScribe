@@ -9,9 +9,10 @@ interface WorkbenchProps {
   onDelete: (id: string) => void;
   onBack: () => void;
   onOpenSettings: () => void;
+  hasActiveSession?: boolean;
 }
 
-export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings }: WorkbenchProps) {
+export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, hasActiveSession }: WorkbenchProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const filteredRecords = records.filter(r => 
@@ -34,7 +35,7 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings }:
             onClick={onBack}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm"
           >
-            返回首页
+            {hasActiveSession ? '返回会话' : '返回首页'}
           </button>
         </div>
 

@@ -51,6 +51,7 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = React.useState(false);
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'saved'>('idle');
+  const [appVersion, setAppVersion] = React.useState<string>('');
 
   // Initialize Workbench and Settings from native storage
   React.useEffect(() => {
@@ -67,6 +68,17 @@ export default function App() {
       // 2. Load Workbench from SQLite
       const records = await loadWorkbenchRecords();
       setWorkbenchRecords(records);
+
+      // 3. Get App Version from Tauri
+      try {
+        const { getVersion } = await import('@tauri-apps/api/app');
+        const version = await getVersion();
+        setAppVersion(version);
+      } catch (error) {
+        console.warn('Failed to fetch app version from Tauri:', error);
+        // Fallback to a default if not running in Tauri
+        setAppVersion('0.1.0-beta');
+      }
     }
 
     initStorage();
@@ -281,17 +293,28 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i+1}:** ${p.feature}\n**效果
     <div className="flex flex-col h-screen overflow-hidden bg-app-bg text-gray-800">
       {/* Top Navbar */}
       <header className="h-14 border-b border-gray-100 bg-slate-900 text-white flex items-center justify-between px-6 shrink-0 z-50">
-        <div className="flex items-center gap-3">
-          <Logo size={32} className="shadow-lg shadow-indigo-900/20" />
+        <div 
+          className="flex items-center gap-3 cursor-pointer group transition-all" 
+          onClick={reset}
+          title="返回首页 (重置当前会话)"
+        >
+          <Logo size={32} className="shadow-lg shadow-indigo-900/20 group-hover:scale-110 transition-transform" />
           <div className="flex items-baseline gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-white font-serif">PatentScribe AI</h1>
-            <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-[0.3em] font-semibold">v0.6 Beta</span>
+            <h1 className="text-xl font-bold tracking-tight text-white font-serif group-hover:text-indigo-300 transition-colors">PatentScribe AI</h1>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
           {state.status !== 'idle' && state.status !== 'workbench' && (
             <>
+              <button 
+                onClick={reset}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white rounded-lg text-[11px] font-bold transition-all border border-white/5"
+                title="结束当前会话并返回首页"
+              >
+                <Plus size={14} className="text-indigo-400" />
+                新建
+              </button>
               <button 
                 onClick={() => setIsHistoryOpen(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white rounded-lg text-[11px] font-bold transition-all border border-white/5"
@@ -325,29 +348,37 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i+1}:** ${p.feature}\n**效果
                 </span>
               </button>
               <div className="h-4 w-[1px] bg-white/20 mx-2" />
-              <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide">
+            </>
+          )}
+
+          {state.status !== 'workbench' && (
+             <button 
+               onClick={() => setState(prev => ({ ...prev, status: 'workbench' }))}
+               className={cn(
+                 "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-lg shrink-0",
+                 state.status === 'idle' 
+                   ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-900/50" 
+                   : "bg-white/10 hover:bg-white/20 text-white border border-white/10"
+               )}
+             >
+               <Archive size={14} />
+               工作台
+               {workbenchRecords.length > 0 && (
+                 <span className="bg-white text-indigo-600 px-1.5 rounded-full text-[10px] font-bold ml-1">
+                   {workbenchRecords.length}
+                 </span>
+               )}
+             </button>
+          )}
+
+          {state.status !== 'idle' && state.status !== 'workbench' && (
+             <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide ml-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                 <span className="text-gray-300">AI Engine:</span>
                 <span className="text-white font-semibold flex items-center gap-1 uppercase tracking-tighter">
                   {state.settings.modelId.replace(/-/g, ' ')}
                 </span>
               </div>
-            </>
-          )}
-
-          {state.status === 'idle' && (
-             <button 
-               onClick={() => setState(prev => ({ ...prev, status: 'workbench' }))}
-               className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-all shadow-lg shadow-indigo-900/50"
-             >
-               <Archive size={14} />
-               进入工作台
-               {workbenchRecords.length > 0 && (
-                 <span className="bg-white text-indigo-600 px-1.5 rounded-full text-[10px] font-bold">
-                   {workbenchRecords.length}
-                 </span>
-               )}
-             </button>
           )}
 
           <button 
@@ -384,7 +415,14 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i+1}:** ${p.feature}\n**效果
                 records={workbenchRecords} 
                 onLoad={handleLoadRecord} 
                 onDelete={handleDeleteRecord}
-                onBack={() => setState(prev => ({ ...prev, status: 'idle' }))}
+                hasActiveSession={!!state.currentDisclosure}
+                onBack={() => {
+                  if (state.currentDisclosure) {
+                    setState(prev => ({ ...prev, status: 'diagnosed' }));
+                  } else {
+                    setState(prev => ({ ...prev, status: 'idle' }));
+                  }
+                }}
                 onOpenSettings={() => setIsSettingsOpen(true)}
               />
             </motion.div>
@@ -431,7 +469,10 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i+1}:** ${p.feature}\n**效果
             反馈 BUG/需求 (Feedback)
           </button>
         </div>
-        <div>Copyright © 2026 PatentScribe. All Rights Reserved.</div>
+        <div className="flex items-center gap-4">
+          <div>Copyright © 2026 PatentScribe. All Rights Reserved.</div>
+          {appVersion && <div className="text-indigo-500/80 font-bold">v{appVersion}</div>}
+        </div>
       </footer>
       <SettingsModal 
         isOpen={isSettingsOpen} 

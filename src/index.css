@@ -1,0 +1,53 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-brand-primary: #4f46e5;
+  --color-brand-secondary: #f59e0b;
+  --color-app-bg: #f8f9fa;
+  --color-app-card: #ffffff;
+  --color-app-border: #e5e7eb;
+  --color-header-bg: #111827;
+  
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Georgia", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-app-bg text-gray-800 antialiased;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-sans font-semibold tracking-tight text-gray-900;
+  }
+}
+
+.serif-doc {
+  font-family: var(--font-serif);
+}
+
+.ai-blue {
+  background-color: #e0e7ff;
+  border-left: 4px solid #4f46e5;
+}
+
+.missing-amber {
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+.markdown-body {
+  @apply text-gray-700 leading-loose;
+}
+
+.markdown-body h1 { @apply text-2xl font-bold mb-8 text-center border-b pb-4 text-gray-900; }
+.markdown-body h2 { @apply text-sm font-bold mt-10 mb-4 uppercase tracking-wider text-indigo-900 font-sans; }
+.markdown-body h3 { @apply text-base font-semibold mt-6 mb-3 text-gray-800; }
+.markdown-body p { @apply mb-6; }
+.markdown-body table { @apply w-full border-collapse mb-8 text-sm; }
+.markdown-body th { @apply bg-gray-50 border border-gray-200 p-3 text-left font-bold; }
+.markdown-body td { @apply border border-gray-200 p-3; }
+.markdown-body ul { @apply list-disc list-inside mb-6 space-y-2; }
+

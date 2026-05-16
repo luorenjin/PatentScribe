@@ -10,3 +10,5 @@ target/
 .idea/
 .vscode/
 *.iml
+debug/
+release/

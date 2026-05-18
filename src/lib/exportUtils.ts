@@ -1,9 +1,10 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } from "docx";
 import { PatentDisclosure, DiagnosisReport } from "../types/patent";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: DiagnosisReport) {
+  // Dynamic imports for docx
+  const docx = await import("docx");
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+
   const title = disclosure.title || '未命名';
   
   // Create Header Table
@@ -68,7 +69,7 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
   }
 
   function parseMarkdownToDocx(markdown: string) {
-    const elements: (Paragraph | Table)[] = [];
+    const elements: (any | any)[] = []; // docx.Paragraph | docx.Table
     const lines = markdown.split('\n');
     
     let tableRows: string[][] = [];
@@ -220,6 +221,14 @@ export async function exportToPdf(elementId: string, filename: string) {
   }
 
   try {
+    // Dynamic imports for PDF export
+    const [jsPDFMod, html2canvasMod] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas')
+    ]);
+    const jsPDF = jsPDFMod.default;
+    const html2canvas = html2canvasMod.default;
+
     const canvas = await html2canvas(element, {
       scale: 2, // Higher scale for better quality
       useCORS: true,

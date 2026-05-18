@@ -2,15 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FileUp, Zap, Layout, ImagePlus } from 'lucide-react';
 import { cn } from '../lib/utils';
-import mammoth from 'mammoth';
 import { Logo } from './Logo';
 import { ParticleBackground } from './ParticleBackground';
-
-import * as pdfjs from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
-
-// Initialize PDF.js worker using local bundled worker
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 interface FileUploadProps {
   onContentUpload: (content: string, files: File[]) => void;
@@ -33,6 +26,8 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
         if (file.type.startsWith('image/')) {
           imageFiles.push(file);
         } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          // Dynamic import mammoth
+          const mammoth = await import('mammoth');
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer });
           combinedText += result.value + '\n\n';
@@ -40,6 +35,12 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
           const text = await file.text();
           combinedText += text + '\n\n';
         } else if (file.type === 'application/pdf') {
+          // Dynamic import pdfjs
+          const pdfjs = await import('pdfjs-dist');
+          // @ts-ignore
+          const pdfWorker = await import('pdfjs-dist/build/pdf.worker.mjs?url');
+          pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker.default;
+
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
           for (let p = 1; p <= pdf.numPages; p++) {

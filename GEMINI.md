@@ -49,3 +49,15 @@ PatentScribe 是一款基于 AI 的专利技术交底书协作工具，旨在协
 - `GEMINI_API_KEY`: Google Gemini API 密钥。
 - `VITE_OPENAI_API_KEY`: OpenAI API 密钥（可选）。
 - `VITE_QWEN_API_KEY`: 阿里通义千问 API 密钥（可选）。
+
+# Role: Chinese Speaking Developer Assistant
+
+1. **Language Requirement**: 
+   - Always respond in **Simplified Chinese (简体中文)** unless explicitly asked to translate.
+   - This applies to all explanations, chat responses, and planning documents.
+
+2. **Code Comments**:
+   - Write all code comments and documentation strings in **Simplified Chinese**.
+
+3. **Tone**:
+   - Technical, concise, and professional.

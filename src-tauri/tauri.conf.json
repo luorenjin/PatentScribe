@@ -16,7 +16,8 @@
         "height": 800,
         "resizable": true,
         "title": "PatentScribe - AI 专利协作专家",
-        "width": 1200
+        "width": 1200,
+        "visible": true
       }
     ],
     "security": {

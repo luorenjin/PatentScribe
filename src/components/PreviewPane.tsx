@@ -50,7 +50,7 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
     <div className="flex flex-col h-full bg-gray-100">
       <div className="h-12 px-6 flex items-center justify-between border-b border-gray-200 bg-white shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-gray-400">
-           <span className="text-indigo-600">块级编辑(SECTION) / PREVIEW DOCUMENT</span>
+          <span className="text-indigo-600">块级编辑(SECTION) / PREVIEW DOCUMENT</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -73,25 +73,25 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
       <div className="flex-1 overflow-y-auto p-8 bg-gray-200/50 flex justify-center items-start relative">
         {isLoading && (
           <div className="fixed inset-0 bg-white/40 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto">
-            <motion.div 
+            <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
               className="w-10 h-10 border-2 border-indigo-600 border-t-transparent rounded-full"
             />
           </div>
         )}
-        
-        <motion.div 
+
+        <motion.div
           id="patent-preview-container"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[800px] bg-white shadow-lg p-10 serif-doc border border-gray-300 min-h-[1100px] mb-12 relative"
+          className="w-full  bg-white shadow-lg p-10 serif-doc border border-gray-300 min-h-[1100px] mb-12 relative"
         >
           <div className="mb-6 border-b-2 border-slate-900 pb-4">
-             <h1 className="text-3xl font-bold mb-2 tracking-tight text-gray-900 font-serif">专利技术交底书</h1>
-             <p className="text-[10px] font-sans text-gray-500 uppercase tracking-[0.4em] font-medium">Intellectual Property Protection Protocol</p>
+            <h1 className="text-3xl font-bold mb-2 tracking-tight text-gray-900 font-serif">专利技术交底书</h1>
+            <p className="text-[10px] font-sans text-gray-500 uppercase tracking-[0.4em] font-medium">Intellectual Property Protection Protocol</p>
           </div>
-          
+
           {disclosure.claims && disclosure.claims.length > 0 && (
             <div className="mb-8 bg-slate-50 border border-slate-200 rounded-xl p-5 relative">
               <h3 className="font-serif text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
@@ -101,8 +101,8 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
                 {disclosure.claims.map((claim, idx) => (
                   <div key={idx} className={cn(
                     "p-4 rounded-lg border text-sm flex gap-3",
-                    claim.type === 'independent' 
-                      ? "bg-white border-indigo-200 shadow-sm" 
+                    claim.type === 'independent'
+                      ? "bg-white border-indigo-200 shadow-sm"
                       : "bg-white/60 border-slate-200 ml-8"
                   )}>
                     <div className={cn(
@@ -127,11 +127,11 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
 
           <div className="space-y-4">
             {SECTIONS.map((sec) => (
-              <SectionBlock 
-                key={sec.key} 
-                sectionKey={sec.key} 
-                label={sec.label} 
-                content={disclosure[sec.key] as string} 
+              <SectionBlock
+                key={sec.key}
+                sectionKey={sec.key}
+                label={sec.label}
+                content={disclosure[sec.key] as string}
                 disclosure={disclosure}
                 onUpdate={onUpdateSection}
                 settings={settings}
@@ -144,17 +144,17 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
   );
 }
 
-function SectionBlock({ 
-  sectionKey, 
-  label, 
-  content, 
+function SectionBlock({
+  sectionKey,
+  label,
+  content,
   disclosure,
   onUpdate,
   settings
-}: { 
-  sectionKey: keyof PatentDisclosure; 
-  label: string; 
-  content: string; 
+}: {
+  sectionKey: keyof PatentDisclosure;
+  label: string;
+  content: string;
   disclosure: PatentDisclosure;
   onUpdate: (k: keyof PatentDisclosure, v: string) => void;
   settings: AppSettings;
@@ -189,7 +189,7 @@ function SectionBlock({
 
   const preprocessMarkdown = (text: string) => {
     if (!text) return '';
-    
+
     // Step 1: Normalize newlines
     let lines = text.split('\n');
     let processedLines: string[] = [];
@@ -240,12 +240,12 @@ function SectionBlock({
     }
 
     let processed = processedLines.join('\n');
-    
+
     // Implementation-specific formatting for bolding 实施例
     if (sectionKey === 'implementation') {
       processed = processed.replace(/(实施例[一二三四五六七八九十\d]+[:：])/g, '\n\n**$1**\n\n');
     }
-    
+
     return processed.replace(/\n{3,}/g, '\n\n');
   };
 
@@ -253,7 +253,7 @@ function SectionBlock({
     <div className="group relative border border-transparent hover:border-indigo-100 rounded-xl p-2 -mx-2 transition-colors">
       <h2 className="text-xl font-bold text-gray-900 font-serif mb-2 flex items-center justify-between">
         {label}
-        <button 
+        <button
           onClick={() => setIsEditing(!isEditing)}
           className="opacity-0 group-hover:opacity-100 p-2 text-indigo-500 hover:bg-indigo-50 rounded bg-white shadow-sm border border-indigo-100 transition-all text-xs font-sans tracking-wide flex items-center gap-1.5"
         >
@@ -264,7 +264,7 @@ function SectionBlock({
 
       <AnimatePresence>
         {isEditing && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -279,7 +279,7 @@ function SectionBlock({
                 rows={3}
                 disabled={isRefining}
               />
-              
+
               {attachedFiles.length > 0 && (
                 <div className="flex gap-2 mt-2 mb-2 flex-wrap">
                   {attachedFiles.map((f, i) => (
@@ -292,7 +292,7 @@ function SectionBlock({
               )}
 
               <div className="flex justify-between items-center mt-2 border-t border-indigo-100/50 pt-2">
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isRefining}
                   className="text-indigo-500 hover:text-indigo-700 flex items-center gap-1 text-[11px] font-medium transition-colors"
@@ -300,23 +300,23 @@ function SectionBlock({
                   <ImagePlus size={14} />
                   上传附图
                 </button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  multiple 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  multiple
                   accept="image/*"
                   onChange={handleFileChange}
                 />
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setIsEditing(false)}
                     disabled={isRefining}
                     className="px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-200/50 rounded transition-colors"
                   >
                     取消
                   </button>
-                  <button 
+                  <button
                     onClick={handleRefine}
                     disabled={isRefining || (!instruction.trim() && attachedFiles.length === 0)}
                     className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded shadow disabled:opacity-50 flex items-center gap-1.5 transition-all"
@@ -332,21 +332,21 @@ function SectionBlock({
       </AnimatePresence>
 
       <div className="prose prose-slate max-w-none prose-p:text-lg prose-p:leading-relaxed text-gray-800 markdown-body">
-        <ReactMarkdown 
+        <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex, rehypeRaw]}
           components={{
-            h1: ({node, ...props}) => <h3 className="text-xl font-bold font-serif mb-3 mt-4" {...props} />,
-            h2: ({node, ...props}) => <h4 className="text-lg font-bold font-serif mb-2 mt-3" {...props} />,
-            table: ({node, ...props}) => (
+            h1: ({ node, ...props }) => <h3 className="text-xl font-bold font-serif mb-3 mt-4" {...props} />,
+            h2: ({ node, ...props }) => <h4 className="text-lg font-bold font-serif mb-2 mt-3" {...props} />,
+            table: ({ node, ...props }) => (
               <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm overflow-hidden bg-white">
                 <table className="min-w-full border-collapse divide-y divide-slate-200" {...props} />
               </div>
             ),
-            th: ({node, ...props}) => (
+            th: ({ node, ...props }) => (
               <th className="bg-slate-50/80 backdrop-blur-sm px-4 py-4 text-left text-xs font-bold text-slate-800 uppercase tracking-widest border-x border-slate-200 first:border-l-0 last:border-r-0" {...props} />
             ),
-            td: ({node, ...props}) => (
+            td: ({ node, ...props }) => (
               <td className="px-4 py-4 text-sm text-slate-700 border-x border-slate-100 first:border-l-0 last:border-r-0 align-top leading-relaxed even:bg-slate-50/30" {...props} />
             ),
             code({ node, inline, className, children, ...props }: any) {
@@ -376,7 +376,7 @@ function SectionBlock({
               );
             },
             // Improved math rendering
-            span: ({node, className, children, ...props}) => {
+            span: ({ node, className, children, ...props }) => {
               if (className?.includes('katex')) {
                 return <span className={cn(className, "my-2 mx-1 inline-block")} {...props}>{children}</span>;
               }

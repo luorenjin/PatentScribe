@@ -32,6 +32,19 @@ export default defineConfig(({mode}) => {
       target: process.env.TAURI_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
       minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
       sourcemap: !!process.env.TAURI_DEBUG,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'pdf-vendor': ['pdfjs-dist'],
+            'doc-vendor': ['docx', 'mammoth'],
+            'pdf-export-vendor': ['jspdf', 'html2canvas'],
+            'ui-vendor': ['motion', 'lucide-react', 'react', 'react-dom'],
+            'markdown-vendor': ['react-markdown', 'remark-gfm', 'remark-math', 'rehype-katex', 'rehype-raw'],
+            'katex-vendor': ['katex'],
+            'highlight-vendor': ['react-syntax-highlighter'],
+          }
+        }
+      }
     }
   };
 });

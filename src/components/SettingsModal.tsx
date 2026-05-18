@@ -52,7 +52,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
       name: 'OpenAI', 
       icon: Zap, 
       color: 'text-emerald-500', 
-      disabled: false,
+      disabled: true,
       consoleUrl: 'https://platform.openai.com/api-keys',
       defaultEndpoint: 'https://api.openai.com/v1'
     },
@@ -74,10 +74,10 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     { id: 'o1-preview', name: 'OpenAI o1 Preview', type: 'openai' },
     { id: 'o1-mini', name: 'OpenAI o1 Mini', type: 'openai' },
     { id: 'gpt-5o', name: 'GPT-5o (Omni Performance)', type: 'openai' },
-    { id: 'qwen-3.6-plus', name: 'Qwen 3.6 Plus (Latest Precision)', type: 'qwen' },
-    { id: 'qwen-max', name: 'Qwen Max (Most Powerful)', type: 'qwen' },
-    { id: 'qwen-plus', name: 'Qwen Plus (Speed & Efficiency)', type: 'qwen' },
-    { id: 'qwen-turbo', name: 'Qwen Turbo (Lightweight)', type: 'qwen' },
+    { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus (Latest Precision)', type: 'qwen' },
+    { id: 'qwen3.6-flash', name: 'Qwen 3.6 Flash (Fast & Powerful)', type: 'qwen' },
+    { id: 'qwen3.5-plus', name: 'Qwen 3.5 Plus (Speed & Efficiency)', type: 'qwen' },
+    { id: 'qwen3.5-flash', name: 'Qwen 3.5 Flash (Lightweight)', type: 'qwen' },
   ];
 
   const currentProviderConfig = settings.providers?.[settings.llmProvider] || {};

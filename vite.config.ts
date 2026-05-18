@@ -37,7 +37,7 @@ export default defineConfig(({mode}) => {
           manualChunks: {
             'pdf-vendor': ['pdfjs-dist'],
             'doc-vendor': ['docx', 'mammoth'],
-            'pdf-export-vendor': ['jspdf', 'html2canvas'],
+            'pdf-export-vendor': ['jspdf', 'html-to-image'],
             'ui-vendor': ['motion', 'lucide-react', 'react', 'react-dom'],
             'markdown-vendor': ['react-markdown', 'remark-gfm', 'remark-math', 'rehype-katex', 'rehype-raw'],
             'katex-vendor': ['katex'],

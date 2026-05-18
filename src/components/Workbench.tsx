@@ -15,7 +15,7 @@ interface WorkbenchProps {
 export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, hasActiveSession }: WorkbenchProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
-  const filteredRecords = records.filter(r => 
+  const filteredRecords = records.filter(r =>
     r.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -27,11 +27,11 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Archive className="text-indigo-600" size={28} />
-              我的专利工作台
+              工作台
             </h2>
             <p className="text-gray-500 mt-1">存储、管理及快速检索已优化的专利交底书</p>
           </div>
-          <button 
+          <button
             onClick={onBack}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm"
           >
@@ -47,7 +47,7 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
           </div>
           <div className="md:col-span-2 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="通过标题搜索已存记录..."
               value={searchTerm}
@@ -61,7 +61,7 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
         <div className="space-y-4">
           {filteredRecords.length > 0 ? (
             filteredRecords.map((record) => (
-              <motion.div 
+              <motion.div
                 key={record.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -88,7 +88,7 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
                 </div>
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
+                  <button
                     onClick={() => onLoad(record)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                   >
@@ -96,7 +96,7 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
                     打开
                   </button>
                   <div className="relative flex items-center">
-                    <button 
+                    <button
                       onClick={(e) => {
                         const target = e.currentTarget.nextElementSibling;
                         if (target) target.classList.toggle('hidden');
@@ -107,13 +107,13 @@ export function Workbench({ records, onLoad, onDelete, onBack, onOpenSettings, h
                       <Trash2 size={16} />
                     </button>
                     <div className="hidden absolute right-0 top-full mt-2 bg-white shadow-xl border border-gray-100 rounded-lg p-2 z-10 flex gap-2 w-max">
-                      <button 
+                      <button
                         onClick={() => onDelete(record.id)}
                         className="px-3 py-1 bg-rose-600 text-white text-[10px] font-bold rounded hover:bg-rose-700 transition-colors"
                       >
                         确认删除
                       </button>
-                      <button 
+                      <button
                         onClick={(e) => (e.currentTarget.parentElement as HTMLElement).classList.add('hidden')}
                         className="px-3 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded hover:bg-gray-200 transition-colors"
                       >

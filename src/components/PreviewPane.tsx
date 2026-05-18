@@ -58,14 +58,7 @@ export function PreviewPane({ disclosure, isLoading, onExportDocx, onExportPdf, 
             className="bg-white text-indigo-600 border border-indigo-200 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wide hover:bg-indigo-50 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <FileText size={12} />
-            下载 .DOCX
-          </button>
-          <button
-            onClick={onExportPdf}
-            className="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wide hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-md"
-          >
-            <Plus size={12} />
-            下载 .PDF
+            导出DOCX
           </button>
         </div>
       </div>
@@ -340,14 +333,14 @@ function SectionBlock({
             h2: ({ node, ...props }) => <h4 className="text-lg font-bold font-serif mb-2 mt-3" {...props} />,
             table: ({ node, ...props }) => (
               <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm overflow-hidden bg-white">
-                <table className="min-w-full border-collapse divide-y divide-slate-200" {...props} />
+                <table className="min-w-full border-collapse" {...props} />
               </div>
             ),
             th: ({ node, ...props }) => (
-              <th className="bg-slate-50/80 backdrop-blur-sm px-4 py-4 text-left text-xs font-bold text-slate-800 uppercase tracking-widest border-x border-slate-200 first:border-l-0 last:border-r-0" {...props} />
+              <th className="bg-slate-50/80 backdrop-blur-sm px-4 py-4 text-left text-[10px] font-bold text-slate-800 uppercase tracking-widest border border-slate-200 first:border-l-0 last:border-r-0" {...props} />
             ),
             td: ({ node, ...props }) => (
-              <td className="px-4 py-4 text-sm text-slate-700 border-x border-slate-100 first:border-l-0 last:border-r-0 align-top leading-relaxed even:bg-slate-50/30" {...props} />
+              <td className="px-4 py-4 text-sm text-slate-700 border border-slate-200 first:border-l-0 last:border-r-0 align-top leading-relaxed even:bg-slate-50/30" {...props} />
             ),
             code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');

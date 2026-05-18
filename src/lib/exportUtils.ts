@@ -1,4 +1,5 @@
 import { PatentDisclosure, DiagnosisReport } from "../types/patent";
+import type { TextRun as DocxTextRun } from "docx";
 
 export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: DiagnosisReport) {
   // Dynamic imports for docx
@@ -14,8 +15,8 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
       new TableRow({
         children: [
           new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: " 发明名称", bold: true })] })], width: { size: 20, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph(disclosure.title || "")], width: { size: 30, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: " 项目编号", bold: true })] })], width: { size: 20, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph(disclosure.title || "")] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: " 项目编号", bold: true })] })] }),
           new TableCell({ children: [new Paragraph("")] }),
         ]
       }),
@@ -55,7 +56,7 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
     ]
   });
 
-  function parseInlineMarkdown(text: string): TextRun[] {
+  function parseInlineMarkdown(text: string): DocxTextRun[] {
     const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
     return parts.map(part => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -87,7 +88,7 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
         continue;
       } else if (tableRows.length > 0) {
         // Build table
-        const rows = tableRows.map((row, rowIdx) => {
+        const rows = tableRows.map((row) => {
           return new TableRow({
             children: row.map(col => {
               return new TableCell({
@@ -136,7 +137,7 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
     
     // Process trailing table if any
     if (tableRows.length > 0) {
-        const rows = tableRows.map((row, rowIdx) => {
+        const rows = tableRows.map((row) => {
           return new TableRow({
             children: row.map(col => {
               return new TableCell({
@@ -205,12 +206,41 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
   });
 
   const blob = await Packer.toBlob(doc);
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `专利交底书_${title}.docx`;
-  a.click();
-  window.URL.revokeObjectURL(url);
+  
+  // Use a more robust check for Tauri environment
+  const isTauri = typeof (window as any).__TAURI_INTERNALS__ !== 'undefined';
+
+  if (isTauri) {
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const { writeFile } = await import('@tauri-apps/plugin-fs');
+      
+      const filePath = await save({
+        filters: [{ name: 'Word Document', extensions: ['docx'] }],
+        defaultPath: `专利交底书_${title}.docx`,
+      });
+      
+      if (filePath) {
+        const buffer = await blob.arrayBuffer();
+        await writeFile(filePath, new Uint8Array(buffer));
+      }
+    } catch (err) {
+      console.error("Tauri file save failed:", err);
+      // Fallback to browser download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `专利交底书_${title}.docx`;
+      a.click();
+    }
+  } else {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `专利交底书_${title}.docx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 export async function exportToPdf(elementId: string, filename: string) {
@@ -221,55 +251,78 @@ export async function exportToPdf(elementId: string, filename: string) {
   }
 
   try {
-    // Dynamic imports for PDF export
-    const [jsPDFMod, html2canvasMod] = await Promise.all([
+    // Switch to html-to-image which is much better with modern CSS and borders
+    const [jsPDFMod, htmlToImageMod] = await Promise.all([
       import('jspdf'),
-      import('html2canvas')
+      import('html-to-image')
     ]);
     const jsPDF = jsPDFMod.default;
-    const html2canvas = html2canvasMod.default;
+    const { toPng } = htmlToImageMod;
 
-    const canvas = await html2canvas(element, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff'
+    // Use pixelRatio: 2 for high quality without CSS scaling artifacts
+    const imgData = await toPng(element, {
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true,
+      style: {
+        // Ensure consistent rendering
+        fontFamily: 'Georgia, serif'
+      }
     });
 
-    const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
     
-    const imgScaledWidth = imgWidth * ratio;
-    const imgScaledHeight = imgHeight * ratio;
-    
-    // Center alignment
-    const marginX = (pdfWidth - imgScaledWidth) / 2;
-    const marginY = 10; // Top margin
+    // We need to calculate dimensions based on the captured image
+    const tempImg = new Image();
+    await new Promise((resolve) => {
+      tempImg.onload = resolve;
+      tempImg.src = imgData;
+    });
 
-    // Check if multiple pages are needed
-    let heightLeft = imgHeight;
-    let position = 0;
-    const pageHeight = pdfHeight;
-    const imgWidthInPDF = pdfWidth;
+    const imgWidth = tempImg.width;
+    const imgHeight = tempImg.height;
     const imgHeightInPDF = (imgHeight * pdfWidth) / imgWidth;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidthInPDF, imgHeightInPDF);
+    let heightLeft = imgHeightInPDF;
+    let position = 0;
+    const pageHeight = pdfHeight;
+
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPDF);
     heightLeft -= pageHeight;
 
     while (heightLeft >= 0) {
       position = heightLeft - imgHeightInPDF;
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidthInPDF, imgHeightInPDF);
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPDF);
       heightLeft -= pageHeight;
     }
 
-    pdf.save(`${filename}.pdf`);
+    const isTauri = typeof (window as any).__TAURI_INTERNALS__ !== 'undefined';
+
+    if (isTauri) {
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const { writeFile } = await import('@tauri-apps/plugin-fs');
+        
+        const filePath = await save({
+          filters: [{ name: 'PDF Document', extensions: ['pdf'] }],
+          defaultPath: `${filename}.pdf`,
+        });
+        
+        if (filePath) {
+          const pdfBuffer = pdf.output('arraybuffer');
+          await writeFile(filePath, new Uint8Array(pdfBuffer));
+        }
+      } catch (err) {
+        console.error("Tauri PDF save failed:", err);
+        pdf.save(`${filename}.pdf`);
+      }
+    } else {
+      pdf.save(`${filename}.pdf`);
+    }
   } catch (error) {
     console.error("PDF Export failed:", error);
     throw error;

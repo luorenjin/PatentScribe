@@ -107,7 +107,7 @@ export default function App() {
         setAppVersion(version);
       } catch (error) {
         console.warn('Failed to fetch app version from Tauri:', error);
-        setAppVersion('0.1.0-beta');
+        setAppVersion(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.1.0-beta');
       }
 
       setIsAppReady(true);

@@ -1,15 +1,19 @@
 {
   "name": "patentmate",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.2",
+  "author": "Luorj <luorj@microviewsz.com>",
+  "publisher": "MicroView",
+  "description": "PatentMate AI - 专利技术交底书协作专家",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "node scripts/sync-version.cjs && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
+    "tauri": "node scripts/sync-version.cjs && tauri",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "version-sync": "node scripts/sync-version.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

@@ -1,5 +1,6 @@
 {
   "productName": "PatentMate",
+  "mainBinaryName": "PatentMate",
   "version": "../package.json",
   "identifier": "com.patentmate.app",
   "build": {
@@ -28,7 +29,7 @@
   "bundle": {
     "active": true,
     "category": "DeveloperTool",
-    "copyright": "Copyright © 2026 PatentMate",
+    "copyright": "Copyright © 2026 MicroView. All Rights Reserved.",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -37,8 +38,8 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "longDescription": "An AI-powered patent disclosure tool.",
-    "shortDescription": "PatentMate Desktop",
+    "longDescription": "PatentMate AI - 专利技术交底书协作专家。由 MicroView 开发，旨在通过 AI 技术协助专利工程师进行高效挖掘与文档生成。",
+    "shortDescription": "PatentMate AI by MicroView",
     "targets": "all"
   },
   "plugins": {

@@ -161,9 +161,29 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
         </div>
 
         <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
-          onDragLeave={() => setIsDragActive(false)}
-          onDrop={(e) => { e.preventDefault(); setIsDragActive(false); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragActive(true);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragActive(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragActive(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragActive(false);
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              handleFiles(e.dataTransfer.files);
+            }
+          }}
           className={cn(
             "relative group cursor-pointer bg-white border border-gray-200 shadow-xl rounded-3xl p-12 transition-all duration-500",
             isDragActive ? "border-indigo-600 ring-4 ring-indigo-50 -translate-y-2" : "hover:border-indigo-300 hover:-translate-y-1"
@@ -179,7 +199,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
             accept=".docx,.doc,.txt,.pdf,image/*"
           />
           
-          <div className="space-y-6">
+          <div className="space-y-6 pointer-events-none">
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <FileUp size={32} />

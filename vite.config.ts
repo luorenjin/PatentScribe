@@ -9,6 +9,7 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      '__APP_VERSION__': JSON.stringify(process.env.npm_package_version || require('./package.json').version),
     },
     // 防止 Vite 在脚本错误时清空控制台
     clearScreen: false,

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AppSettings, ProviderConfig } from '../types/patent';
 import { cn } from '../lib/utils';
+import { AVAILABLE_MODELS, DEFAULT_PROVIDER_CONFIGS } from '../config/models';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -75,19 +76,6 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     },
   ];
 
-  const models = [
-    { id: 'gemini-3-flash-preview', name: 'Gemini 3.1 Flash (Fast & Balanced)', type: 'google' },
-    { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)', type: 'google' },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Advanced Logic)', type: 'google' },
-    { id: 'gpt-5.4', name: 'OpenAI GPT5.4 (Next Gen Reasoning)', type: 'openai' },
-    { id: 'gpt-5.4-mini', name: 'OpenAI GPT5.4 Mini (Preview)', type: 'openai' },
-    { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus (Latest Precision)', type: 'qwen' },
-    { id: 'qwen3.6-flash', name: 'Qwen 3.6 Flash (Fast & Powerful)', type: 'qwen' },
-    { id: 'qwen3.5-plus', name: 'Qwen 3.5 Plus (Speed & Efficiency)', type: 'qwen' },
-    { id: 'qwen3.5-flash', name: 'Qwen 3.5 Flash (Lightweight)', type: 'qwen' },
-
-  ];
-
   const currentProviderConfig = settings.providers?.[settings.llmProvider] || {};
 
   const handleUpdateProviderConfig = (updates: Partial<ProviderConfig>) => {
@@ -126,14 +114,8 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     let targetModelId = providerConfig.modelId;
 
     if (!targetModelId) {
-      if (providerId === 'builtin') {
-        targetModelId = 'qwen3.6-plus';
-      } else if (providerId === 'custom') {
-        targetModelId = 'custom-model';
-      } else {
-        const firstModel = models.find(m => m.type === providerId);
-        targetModelId = firstModel ? firstModel.id : '';
-      }
+      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.builtin;
+      targetModelId = config.mainModel;
     }
 
     onUpdateSettings({ 
@@ -264,7 +246,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {models.filter(m => m.type === settings.llmProvider).map((m) => (
+                      {AVAILABLE_MODELS.filter(m => m.provider === settings.llmProvider).map((m) => (
                         <button
                           key={m.id}
                           onClick={() => handleModelSelect(m.id)}

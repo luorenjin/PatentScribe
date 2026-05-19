@@ -17,6 +17,7 @@ import {
 import { AppSettings, ProviderConfig } from '../types/patent';
 import { cn } from '../lib/utils';
 import { Logo } from './Logo';
+import { DEFAULT_PROVIDER_CONFIGS } from '../config/models';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -89,11 +90,8 @@ export function OnboardingModal({ isOpen, settings, onComplete }: OnboardingModa
     
     let targetModelId = providerConfig.modelId;
     if (!targetModelId) {
-      if (providerId === 'builtin') targetModelId = 'qwen3.6-plus';
-      else if (providerId === 'google') targetModelId = 'gemini-3-flash-preview';
-      else if (providerId === 'openai') targetModelId = 'gpt-4o';
-      else if (providerId === 'qwen') targetModelId = 'qwen3.6-plus';
-      else targetModelId = 'custom-model';
+      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.builtin;
+      targetModelId = config.mainModel;
     }
 
     setCurrentSettings({ 

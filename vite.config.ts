@@ -28,6 +28,28 @@ export default defineConfig(({mode}) => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'motion/react',
+        'lucide-react',
+        'docx',
+        'mammoth',
+        'jspdf',
+        'html-to-image',
+        'pdfjs-dist',
+        'react-markdown',
+        'remark-gfm',
+        'remark-math',
+        'rehype-katex',
+        'rehype-raw',
+        'react-syntax-highlighter',
+        'katex',
+        '@google/genai',
+        'openai'
+      ]
+    },
     build: {
       target: process.env.TAURI_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
       minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,

@@ -1,4 +1,5 @@
 import { PatentDisclosure, DiagnosisReport, AppSettings } from "../types/patent";
+import { DEFAULT_PROVIDER_CONFIGS, isModelVisionSupported } from "../config/models";
 
 // --- Provider Interfaces & Types ---
 
@@ -34,37 +35,14 @@ const SYSTEM_PROMPT = `你是一位资深专利工程师与专利代理人协作
 - implementation: 具体实施方式（至少包含 2 个实施例）
 - claims: 权利要求草图 (Claims Map)。必须包含 id, type (independent/dependent), content, dependsOn (if dependent)。请确保 JSON 返回值中，Markdown 的换行符使用 \\n 转义。不要在表格行中间插入 \\n\\n。`;
 
-// --- Provider Configs & Defaults ---
-
-const DEFAULT_CONFIGS: Record<string, { model: string; backupModel: string; apiEndpoint?: string }> = {
-  builtin: {
-    model: "qwen3.6-plus",
-    backupModel: "qwen3.6-flash",
-    apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-  },
-  google: {
-    model: "gemini-3-flash-preview",
-    backupModel: "gemini-3.1-flash-lite",
-  },
-  openai: {
-    model: "gpt-5.4",
-    backupModel: "gpt-5.4-mini",
-    apiEndpoint: "https://api.openai.com/v1",
-  },
-  qwen: {
-    model: "qwen3.6-plus",
-    backupModel: "qwen3.6-flash",
-    apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-  }
-};
-
 function getModelId(settings: AppSettings, task: 'analyze' | 'others'): string {
   const provider = settings.llmProvider || 'builtin';
   const providerConfig = settings.providers?.[provider];
   if (providerConfig?.modelId) return providerConfig.modelId;
   if (settings.modelId) return settings.modelId;
-  const config = DEFAULT_CONFIGS[provider] || DEFAULT_CONFIGS.builtin;
-  return task === 'analyze' ? config.model : config.backupModel;
+  
+  const config = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.builtin;
+  return task === 'analyze' ? config.mainModel : config.backupModel;
 }
 
 function getCredentials(settings: AppSettings) {
@@ -74,7 +52,7 @@ function getCredentials(settings: AppSettings) {
   if (provider === 'builtin') {
     return {
       apiKey: (import.meta as any).env.VITE_QWEN_API_KEY || '',
-      apiEndpoint: DEFAULT_CONFIGS.builtin.apiEndpoint
+      apiEndpoint: DEFAULT_PROVIDER_CONFIGS.builtin.apiEndpoint
     };
   }
 
@@ -546,7 +524,7 @@ ${instruction}
 class OpenAIProvider implements LLMProvider {
   protected async getClient(settings: AppSettings) {
     const provider = settings.llmProvider || 'openai';
-    const config = DEFAULT_CONFIGS[provider] || DEFAULT_CONFIGS.openai;
+    const config = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.openai;
     const { apiKey, apiEndpoint } = getCredentials(settings);
 
     const finalApiKey = apiKey || (provider === 'openai' ? (import.meta as any).env.VITE_OPENAI_API_KEY : (import.meta as any).env.VITE_QWEN_API_KEY) || '';
@@ -565,16 +543,7 @@ class OpenAIProvider implements LLMProvider {
   async analyze(content: string, files: File[], settings: AppSettings) {
     const client = await this.getClient(settings);
     const modelId = getModelId(settings, 'analyze');
-
-    const isVisionSupported =
-      modelId.includes('gpt-4o') ||
-      modelId.includes('gpt-4-turbo') ||
-      modelId.includes('vl') ||
-      modelId.includes('vision') ||
-      modelId.includes('qwen3.6-plus') ||
-      modelId.includes('qwen3.6-flash') ||
-      modelId.includes('qwen3.5-plus') ||
-      modelId.includes('qwen3.5-flash');
+    const isVisionSupported = isModelVisionSupported(modelId);
 
     const messages: any[] = [
       { role: 'system', content: SYSTEM_PROMPT + "\n\nIMPORTANT: Your response must be a valid JSON object. Do not include any conversational filler or markdown formatting outside the JSON." },
@@ -625,17 +594,8 @@ class OpenAIProvider implements LLMProvider {
 
   async updateDisclosure(original: PatentDisclosure, history: any[], files: File[], settings: AppSettings) {
     const client = await this.getClient(settings);
-    const modelId = getModelId(settings, 'analyze');
-
-    const isVisionSupported =
-      modelId.includes('gpt-4o') ||
-      modelId.includes('gpt-4-turbo') ||
-      modelId.includes('vl') ||
-      modelId.includes('vision') ||
-      modelId.includes('qwen3.6-plus') ||
-      modelId.includes('qwen3.6-flash') ||
-      modelId.includes('qwen3.5-plus') ||
-      modelId.includes('qwen3.5-flash');
+    const modelId = getModelId(settings, 'others');
+    const isVisionSupported = isModelVisionSupported(modelId);
 
     const messages: any[] = [
       { role: 'system', content: SYSTEM_PROMPT + "\n\nIMPORTANT: Your response must be a valid JSON object." },
@@ -665,16 +625,7 @@ class OpenAIProvider implements LLMProvider {
   async reviseSection(sectionKey: string, originalSection: string, instruction: string, disclosure: PatentDisclosure, files: File[], settings: AppSettings) {
     const client = await this.getClient(settings);
     const modelId = getModelId(settings, 'others');
-
-    const isVisionSupported =
-      modelId.includes('gpt-4o') ||
-      modelId.includes('gpt-4-turbo') ||
-      modelId.includes('vl') ||
-      modelId.includes('vision') ||
-      modelId.includes('qwen3.6-plus') ||
-      modelId.includes('qwen3.6-flash') ||
-      modelId.includes('qwen3.5-plus') ||
-      modelId.includes('qwen3.5-flash');
+    const isVisionSupported = isModelVisionSupported(modelId);
 
     const response = await client.chat.completions.create({
       model: modelId,
@@ -702,11 +653,6 @@ function getProvider(llmProvider: string): LLMProvider {
   switch (llmProvider) {
     case 'google':
       return new GoogleProvider();
-    case 'openai':
-    case 'qwen':
-    case 'custom':
-    case 'builtin':
-      return new OpenAIProvider();
     default:
       return new OpenAIProvider();
   }

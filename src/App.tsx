@@ -11,6 +11,7 @@ import { FileUpload } from './components/FileUpload';
 import { Logo } from './components/Logo';
 import { cn } from './lib/utils';
 import { WorkbenchRecord, AppSettings } from './types/patent';
+import { DEFAULT_PROVIDER_CONFIGS } from './config/models';
 import { loadSettings, saveSettings, loadWorkbenchRecords, saveWorkbenchRecord, deleteWorkbenchRecord } from './lib/storage';
 import { Loader2, MessageSquare, Save, CheckCircle, Archive, Plus, Settings, Clock } from 'lucide-react';
 
@@ -24,14 +25,14 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m
 
 const INITIAL_SETTINGS: AppSettings = {
   llmProvider: 'builtin',
-  modelId: 'qwen3.6-plus',
+  modelId: DEFAULT_PROVIDER_CONFIGS.builtin.mainModel,
   isMultimodalEnabled: true,
   providers: {
-    builtin: { modelId: 'qwen3.6-plus' },
-    qwen: { modelId: 'qwen3.6-plus' },
-    google: { modelId: 'gemini-3-flash-preview' },
-    openai: { modelId: 'gpt-4o' },
-    custom: { modelId: 'custom-model' }
+    builtin: { modelId: DEFAULT_PROVIDER_CONFIGS.builtin.mainModel },
+    qwen: { modelId: DEFAULT_PROVIDER_CONFIGS.qwen.mainModel },
+    google: { modelId: DEFAULT_PROVIDER_CONFIGS.google.mainModel },
+    openai: { modelId: DEFAULT_PROVIDER_CONFIGS.openai.mainModel },
+    custom: { modelId: DEFAULT_PROVIDER_CONFIGS.custom.mainModel }
   }
 };
 

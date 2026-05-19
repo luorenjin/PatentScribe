@@ -1,16 +1,11 @@
 {
   "name": "patentmate",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "Luorj <luorj@microviewsz.com>",
   "publisher": "MicroView",
   "description": "PatentMate AI - 专利技术交底书协作专家",
   "type": "module",
-  "pkg": {
-    "assets": [
-      "scripts/keys/*.pem"
-    ]
-  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "node scripts/sync-version.cjs && vite build",
@@ -19,7 +14,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "version-sync": "node scripts/sync-version.cjs",
-    "build:keygen": "pkg scripts/keygen.cjs -t node18-win-x64 -o dist/keygen.exe"
+    "build:keygen": "cargo build --release --manifest-path scripts/keygen/Cargo.toml && node -e \"require('fs').copyFileSync('scripts/keygen/target/release/keygen.exe', 'dist/keygen.exe')\""
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -65,7 +60,6 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react-dom": "^19.2.3",
-    "@yao-pkg/pkg": "^6.19.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "tailwindcss": "^4.1.14",

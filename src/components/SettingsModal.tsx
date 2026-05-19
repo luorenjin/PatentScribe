@@ -24,10 +24,22 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: AppSettings;
   onUpdateSettings: (settings: AppSettings) => void;
+  isActivated: boolean;
+  expiryDate?: string | null;
+  onOpenActivation: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isActivated, expiryDate, onOpenActivation }: SettingsModalProps) {
   const [showApiKey, setShowApiKey] = React.useState(false);
+  const [machineCode, setMachineCode] = React.useState<string>('加载中...');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const { invoke } = import('@tauri-apps/api/core').then(m => {
+        m.invoke<string>('get_machine_code').then(setMachineCode).catch(console.error);
+      });
+    }
+  }, [isOpen]);
 
   const providers = [
     { 
@@ -374,6 +386,60 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
                       className="absolute top-1 w-3 h-3 bg-white rounded-full transition-all" 
                     />
                   </button>
+                </div>
+              </section>
+
+              {/* Software License Information */}
+              <section className="bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100/50">
+                <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-4 block">
+                  软件授权状态 (LICENSE)
+                </label>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "p-2 rounded-xl border shadow-sm",
+                        isActivated ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-amber-50 border-amber-100 text-amber-600"
+                      )}>
+                        <ShieldCheck size={18} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-900">
+                          {isActivated ? "已激活 (专业版)" : "试用模式 (受限)"}
+                        </div>
+                        <div className="text-[10px] text-gray-500">
+                          {isActivated ? `授权有效期至: ${expiryDate || '永久'}` : "部分功能需要激活后使用"}
+                        </div>
+                      </div>
+                    </div>
+                    {!isActivated && (
+                      <button 
+                        onClick={() => {
+                          onClose();
+                          onOpenActivation();
+                        }}
+                        className="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-all"
+                      >
+                        立即激活
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="pt-2 border-t border-indigo-100/50">
+                    <div className="text-[10px] font-bold text-indigo-400/80 uppercase mb-2">本机机器码</div>
+                    <div className="flex items-center justify-between bg-white border border-indigo-100/50 rounded-lg px-3 py-2 font-mono text-[11px] text-indigo-900 shadow-inner">
+                      <span>{machineCode}</span>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(machineCode);
+                          alert('机器码已复制');
+                        }}
+                        className="text-indigo-600 hover:text-indigo-700 font-bold"
+                      >
+                        复制
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
             </div>

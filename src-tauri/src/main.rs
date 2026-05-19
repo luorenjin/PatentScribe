@@ -22,13 +22,21 @@ struct LicenseEnvelope {
   signature: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, serde::Serialize)]
 struct LicenseContent {
   #[serde(rename = "machineCode")]
   machine_code: String,
-  #[allow(dead_code)]
   #[serde(rename = "expiryDate")]
   expiry_date: String,
+}
+
+#[derive(serde::Serialize)]
+struct ActivationInfo {
+  #[serde(rename = "isValid")]
+  is_valid: bool,
+  #[serde(rename = "expiryDate")]
+  expiry_date: Option<String>,
+  error: Option<String>,
 }
 
 #[tauri::command]
@@ -44,18 +52,20 @@ fn get_machine_code() -> String {
 }
 
 #[tauri::command]
-fn verify_license(license_data: String, machine_code: String) -> bool {
-  if license_data.is_empty() { return false; }
+fn verify_license(license_data: String, machine_code: String) -> ActivationInfo {
+  if license_data.is_empty() { 
+    return ActivationInfo { is_valid: false, expiry_date: None, error: Some("许可证数据为空".into()) }; 
+  }
 
   // 1. Decode Envelope
   let envelope_bytes = match general_purpose::STANDARD.decode(license_data.trim()) {
     Ok(b) => b,
-    Err(_) => return false,
+    Err(_) => return ActivationInfo { is_valid: false, expiry_date: None, error: Some("无法解码许可证".into()) },
   };
 
   let envelope: LicenseEnvelope = match serde_json::from_slice(&envelope_bytes) {
     Ok(e) => e,
-    Err(_) => return false,
+    Err(_) => return ActivationInfo { is_valid: false, expiry_date: None, error: Some("无效的许可证格式".into()) },
   };
 
   // 2. Load Public Key from Env or Fallback
@@ -65,13 +75,13 @@ fn verify_license(license_data: String, machine_code: String) -> bool {
 
   let pub_key = match RsaPublicKey::from_public_key_pem(&pub_key_pem) {
     Ok(k) => k,
-    Err(_) => return false,
+    Err(_) => return ActivationInfo { is_valid: false, expiry_date: None, error: Some("公钥加载失败".into()) },
   };
 
   // 3. Verify Signature
   let sig_bytes = match general_purpose::STANDARD.decode(&envelope.signature) {
     Ok(b) => b,
-    Err(_) => return false,
+    Err(_) => return ActivationInfo { is_valid: false, expiry_date: None, error: Some("无法解码签名".into()) },
   };
 
   let mut hasher = Sha256::new();
@@ -79,16 +89,24 @@ fn verify_license(license_data: String, machine_code: String) -> bool {
   let hashed = hasher.finalize();
 
   if pub_key.verify(Pkcs1v15Sign::new::<Sha256>(), &hashed, &sig_bytes).is_err() {
-    return false;
+    return ActivationInfo { is_valid: false, expiry_date: None, error: Some("签名验证失败".into()) };
   }
 
   // 4. Check Content
   let content: LicenseContent = match serde_json::from_str(&envelope.data) {
     Ok(c) => c,
-    Err(_) => return false,
+    Err(_) => return ActivationInfo { is_valid: false, expiry_date: None, error: Some("无法解析许可证内容".into()) },
   };
 
-  content.machine_code == machine_code
+  if content.machine_code != machine_code {
+    return ActivationInfo { is_valid: false, expiry_date: None, error: Some("机器码不匹配".into()) };
+  }
+
+  ActivationInfo { 
+    is_valid: true, 
+    expiry_date: Some(content.expiry_date), 
+    error: None 
+  }
 }
 
 fn main() {

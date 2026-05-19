@@ -1,44 +1,46 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
-const KEY_DIR = path.join(__dirname, 'keys');
-const PRIVATE_KEY_PATH = path.join(KEY_DIR, 'private.pem');
-const PUBLIC_KEY_PATH = path.join(KEY_DIR, 'public.pem');
+/**
+ * 既然 pkg 的静态资源打包在某些环境下不稳定，
+ * 我们直接将私钥内嵌在代码中，确保生成的 exe 100% 可用且不依赖外部文件。
+ */
+const PRIVATE_KEY_PEM = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCf/SX0oRq4KlD2
++TWdTSvmOtO1THJES9Nt2rSuzm9BENWwEo3DAI/UuWZCelid4EG8gIvH9CokrkK+
+9t/NvhvRhQOK3QIe9Bz02yltJj8Unx1NEQWKhvx6ScPsiimAJdFe7kVmRReLnxGF
+pV4Tt2Wqdyl4oBVxJxSVAxENq/Fk4Ey3L6a8ry6TZFOImJ90mSoKSHzi7xzhdgjs
+X7L36OhsgAKYDdwVNztqZ65zAvf9IbWeAmZoBWru3mMC2lbyvMaMFyJdCtiX52vz
+9038sxdBa1eEz/BUlCTYMtKDWm5d9P90wzzl+ptfqMhM5P2AFtiNnNXPA0vwyhNk
+BuYJi9JhAgMBAAECggEAFCff3sRnKdmG7r5xvzoINE6n+ljBspH89oONrNIsGP3m
+dfK4cl9BP5MF640fWfB1R6rIMW402v8rQIS4qGJxfcFss1Npn32wojZ0LyCY5N+w
+4NMqqAuehkeBy+ySEudwy61oB9zffQMSwYwWYJSD1eiCTISafvFl+enzfY3ycPtQ
+B8Q9EUKOpVUi4YnYmpMKfCtIduKq8RVRQfDInMjKCtmdlLrkzf5TqWQl5VhspAhV
+4sqFPyln7HFIcIARbVP7S9hqHsc2jBznLex10Y5F7/63+zvlwm7+bi3/+JZA049/
+IkoXlBdDvNR9cyBFAkWZQ1CixI8Y2BCqfL4CN+BtAwKBgQDXR0YjxbI2zyDeJUYt
+LVMFLaUfqfUrjnB+5+DyB9txN49f3+V+P+IJYqDbtjKIx+abwrPZ6gzYuAVza5n8
+Ng0455xag/OpF8qnwsRYUf05EveHPlV6raZftmqZEVEipSzirpLrNB3iDsGSRFUG
+wKGSIkewR0dnc78D4vBh0k9V9wKBgQC+QILnHSMTtNRPtd4/Wo4fTihn/evq+c9I
+pjCCOelhU+zqxCxZhuo0cSvosJ50D8rA9XqLgn48HZorDSKvH21CRcf4iWkfvUXi
++IwIMT336HOoxnlvxCTbL/A/kQEU+KDWYcjjOw10duzAoEhl6wyNOU7Jr004Vrwy
+DDIo0GKkZwKBgQDNUZvyuDXNkmTtmi1BHy5EDRGkjmtXXGWsk6j2DUpcw7nJnff6
+HiGOA/QZOL8ft1AZFGyGFHSmKXSBbYmSg1a/BB8aMSkuB5PvxpGPDrttOMq9wVSz
+SXUZahhm3p48Zb7Wf9t92dn6ZUp3Hxbc9tHiVzF6TbErWLhAk6viEDw8ZwKBgDIs
+yVkycgHMewHasRZ8R2cyMa3bZdC+uVArpDd0Fny4qY7w1dF2p2XVQwNHMULit1JU
+a1FHxQsNs48PE8qjuyjzRl3hv3vDax8E9cljUziCcZ5dWcGENUQpTG83StXBDIn9
+mAF1nYLNqnrSysU2TEUijAjc1ry5A0EfvkrNSnaZAoGBAM9VvmF6BBJUZtFkEqoK
+Uz78KzlSN2qt8FsSmhey8XcbQWVkSACZoJMsY0T87nWvdwVYorJJ2kjPuq2U9e6/
+SfovO2ydJ2rFjEgYi2lsFCulCfPx/DKMlS3/KfSyjqGYsARJosI0Y9Nn535bJVwd
+EhGfwV2Q3zbnEoVEKIC21zg6
+-----END PRIVATE KEY-----`;
 
-// Ensure keys directory exists
-if (!fs.existsSync(KEY_DIR)) {
-  fs.mkdirSync(KEY_DIR);
-}
-
-function getOrGenerateKeys() {
-  if (fs.existsSync(PRIVATE_KEY_PATH) && fs.existsSync(PUBLIC_KEY_PATH)) {
-    console.log("--- 使用现有的密钥对 ---");
-    return {
-      privateKey: fs.readFileSync(PRIVATE_KEY_PATH, 'utf8'),
-      publicKey: fs.readFileSync(PUBLIC_KEY_PATH, 'utf8')
-    };
-  }
-
-  console.log("--- 正在生成新的 RSA 密钥对... ---");
-  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: { type: 'spki', format: 'pem' },
-    privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-  });
-
-  fs.writeFileSync(PRIVATE_KEY_PATH, privateKey);
-  fs.writeFileSync(PUBLIC_KEY_PATH, publicKey);
-  
-  console.log(`密钥已保存至: ${KEY_DIR}`);
-  return { publicKey, privateKey };
-}
-
-function signLicense(machineCode, expiryDate, privateKeyPem) {
+function signLicense(machineCode, expiryDate) {
   const data = JSON.stringify({ machineCode, expiryDate });
   const sign = crypto.createSign('SHA256');
   sign.update(data);
-  const signature = sign.sign(privateKeyPem, 'base64');
+  const signature = sign.sign(PRIVATE_KEY_PEM, 'base64');
   
   const licenseObj = {
     data: data,
@@ -48,19 +50,56 @@ function signLicense(machineCode, expiryDate, privateKeyPem) {
   return Buffer.from(JSON.stringify(licenseObj)).toString('base64');
 }
 
-const { publicKey, privateKey } = getOrGenerateKeys();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-console.log("\n--- PUBLIC KEY (建议将其配置到根目录的 .env 文件中的 LICENSE_PUBLIC_KEY) ---");
-console.log(publicKey.replace(/\n/g, "\\n"));
+const question = (query) => new Promise((resolve) => rl.question(query, resolve));
 
-console.log("\n--- 生成测试 License ---");
-const args = process.argv.slice(2);
-const machineCode = args[0] || "TEST-MACHINE-CODE";
-const expiryDate = args[1] || "2026-12-31";
+async function run() {
+  console.log("========================================");
+  console.log("   PatentMate License 生成工具 (v1.4)   ");
+  console.log("========================================\n");
 
-const license = signLicense(machineCode, expiryDate, privateKey);
-console.log(`机器码: ${machineCode}`);
-console.log(`有效期: ${expiryDate}`);
-console.log(`\nLicense 内容 (复制到软件激活窗口):\n${license}`);
+  console.log("[系统信息] 密钥已内嵌，准备就绪。");
 
-console.log("\n提示: 如果您修改了密钥对，请务必同步更新 .env 中的 LICENSE_PUBLIC_KEY 并重新启动应用。");
+  // 获取命令行参数
+  const args = process.argv.slice(2);
+  let machineCode = args[0];
+  let expiryDate = args[1];
+
+  if (!machineCode) {
+    machineCode = await question("请输入用户的机器码: ");
+  }
+  if (!expiryDate) {
+    expiryDate = await question("请输入有效期 (YYYY-MM-DD): ");
+    if (!expiryDate) expiryDate = "2026-12-31";
+  }
+
+  machineCode = machineCode ? machineCode.trim() : "";
+  expiryDate = expiryDate ? expiryDate.trim() : "";
+
+  if (!machineCode) {
+    console.log("\n错误: 必须提供机器码。");
+  } else {
+    try {
+      const license = signLicense(machineCode, expiryDate);
+      console.log("\n----------------------------------------");
+      console.log(`机器码: [${machineCode}]`);
+      console.log(`有效期: [${expiryDate}]`);
+      console.log("----------------------------------------");
+      console.log("\nLicense 内容 (请完整复制):");
+      console.log("\n" + license + "\n");
+      console.log("----------------------------------------");
+    } catch (err) {
+      console.error("\n生成失败:", err.message);
+    }
+  }
+
+  console.log("\n按回车键退出...");
+  await question("");
+  rl.close();
+}
+
+run();

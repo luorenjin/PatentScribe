@@ -63,6 +63,7 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
   const [isActivationOpen, setIsActivationOpen] = React.useState(false);
   const [isActivated, setIsActivated] = React.useState(false);
+  const [expiryDate, setExpiryDate] = React.useState<string | null>(null);
   const [isAppReady, setIsAppReady] = React.useState(false);
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'saved'>('idle');
   const [appVersion, setAppVersion] = React.useState<string>('');
@@ -85,8 +86,14 @@ export default function App() {
         if (licenseData) {
           try {
             const machineCode = await invoke<string>('get_machine_code');
-            const isValid = await invoke<boolean>('verify_license', { licenseData, machineCode });
-            setIsActivated(isValid);
+            const result = await invoke<{ isValid: boolean, expiryDate: string | null }>('verify_license', { 
+              licenseData, 
+              machineCode 
+            });
+            setIsActivated(result.isValid);
+            if (result.isValid) {
+              setExpiryDate(result.expiryDate);
+            }
           } catch (e) {
             console.error('Activation verification failed:', e);
           }
@@ -470,6 +477,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
                   onContentUpload={handleInitialUpload} 
                   isLoading={state.isAnalyzing} 
                   isActivated={isActivated}
+                  expiryDate={expiryDate}
                   onOpenActivation={() => setIsActivationOpen(true)}
                 />
               </motion.div>
@@ -560,6 +568,9 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
             onClose={() => setIsSettingsOpen(false)}
             settings={state.settings}
             onUpdateSettings={handleUpdateSettings}
+            isActivated={isActivated}
+            expiryDate={expiryDate}
+            onOpenActivation={() => setIsActivationOpen(true)}
           />
         )}
         {isHistoryOpen && (
@@ -574,7 +585,10 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
           <ActivationModal
             isOpen={isActivationOpen}
             onClose={() => setIsActivationOpen(false)}
-            onActivated={() => setIsActivated(true)}
+            onActivated={(expiry?: string) => {
+              setIsActivated(true);
+              if (expiry) setExpiryDate(expiry);
+            }}
           />
         )}
       </Suspense>

@@ -9,7 +9,7 @@ import { cn } from '../lib/utils';
 interface ActivationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onActivated: () => void;
+  onActivated: (expiryDate?: string) => void;
 }
 
 type Tab = 'email' | 'license';
@@ -87,14 +87,14 @@ export function ActivationModal({ isOpen, onClose, onActivated }: ActivationModa
       await new Promise(resolve => setTimeout(resolve, 1500));
       // 这里的逻辑应该是从服务器获取签名的 licenseData
       const mockLicense = `LICENSE_FOR_${machineCode}_EXPIRES_2026_12_31`;
-      const isValid = await invoke<boolean>('verify_license', { 
+      const result = await invoke<{ isValid: boolean, expiryDate: string | null }>('verify_license', { 
         licenseData: mockLicense, 
         machineCode 
       });
       
-      if (isValid) {
+      if (result.isValid) {
         await saveActivation(mockLicense);
-        onActivated();
+        onActivated(result.expiryDate || undefined);
         onClose();
       } else {
         setError('激活校验失败，请重试');
@@ -111,14 +111,14 @@ export function ActivationModal({ isOpen, onClose, onActivated }: ActivationModa
     setIsLoading(true);
     setError(null);
     try {
-      const isValid = await invoke<boolean>('verify_license', { 
+      const result = await invoke<{ isValid: boolean, expiryDate: string | null }>('verify_license', { 
         licenseData: licenseText, 
         machineCode 
       });
       
-      if (isValid) {
+      if (result.isValid) {
         await saveActivation(licenseText);
-        onActivated();
+        onActivated(result.expiryDate || undefined);
         onClose();
       } else {
         setError('无效的授权文件或机器码不匹配');

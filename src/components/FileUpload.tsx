@@ -10,10 +10,11 @@ interface FileUploadProps {
   onContentUpload: (content: string, files: File[]) => void;
   isLoading: boolean;
   isActivated: boolean;
+  expiryDate?: string | null;
   onOpenActivation: () => void;
 }
 
-export function FileUpload({ onContentUpload, isLoading, isActivated, onOpenActivation }: FileUploadProps) {
+export function FileUpload({ onContentUpload, isLoading, isActivated, expiryDate, onOpenActivation }: FileUploadProps) {
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -239,7 +240,7 @@ export function FileUpload({ onContentUpload, isLoading, isActivated, onOpenActi
           )}
         >
           {isActivated ? <ShieldCheck size={14} /> : <ShieldAlert size={14} className="animate-pulse" />}
-          {isActivated ? "已激活 (专业版)" : "未激活 (需授权)"}
+          {isActivated ? `已激活 (有效期至: ${expiryDate || '永久'})` : "未激活 (需授权)"}
         </button>
       </div>
 
@@ -257,7 +258,7 @@ export function FileUpload({ onContentUpload, isLoading, isActivated, onOpenActi
             <Logo size={80} className="shadow-2xl shadow-indigo-200" />
           </motion.div>
           <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 border-b-4 border-indigo-600 inline-block px-2">PatentMate AI</h1>          <p className="text-gray-500 text-lg max-w-md mx-auto font-medium">
-            多模态 AI 专利交底书搭档
+            专利交底书优化搭档
           </p>
         </div>
 

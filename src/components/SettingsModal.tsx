@@ -31,7 +31,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
   const providers = [
     { 
       id: 'qwen', 
-      name: '通义千问', 
+      name: '阿里百炼', 
       icon: MessageSquare, 
       color: 'text-purple-500', 
       disabled: false,
@@ -78,6 +78,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     { id: 'qwen3.6-flash', name: 'Qwen 3.6 Flash (Fast & Powerful)', type: 'qwen' },
     { id: 'qwen3.5-plus', name: 'Qwen 3.5 Plus (Speed & Efficiency)', type: 'qwen' },
     { id: 'qwen3.5-flash', name: 'Qwen 3.5 Flash (Lightweight)', type: 'qwen' },
+
   ];
 
   const currentProviderConfig = settings.providers?.[settings.llmProvider] || {};

@@ -47,8 +47,8 @@ const DEFAULT_CONFIGS: Record<string, { model: string; backupModel: string; apiE
     apiEndpoint: "https://api.openai.com/v1",
   },
   qwen: {
-    model: "qwen-max",
-    backupModel: "qwen-plus",
+    model: "qwen3.5-plus-2026-04-20",
+    backupModel: "qwen3.5-122b-a10b",
     apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   }
 };

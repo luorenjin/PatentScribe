@@ -206,8 +206,6 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
   });
 
   const blob = await Packer.toBlob(doc);
-  
-  // Use a more robust check for Tauri environment
   const isTauri = typeof (window as any).__TAURI_INTERNALS__ !== 'undefined';
 
   if (isTauri) {
@@ -226,32 +224,29 @@ export async function exportToDocx(disclosure: PatentDisclosure, diagnosis: Diag
       }
     } catch (err) {
       console.error("Tauri file save failed:", err);
-      // Fallback to browser download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `专利交底书_${title}.docx`;
-      a.click();
+      fallbackDownload(blob, `专利交底书_${title}.docx`);
     }
   } else {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `专利交底书_${title}.docx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    fallbackDownload(blob, `专利交底书_${title}.docx`);
   }
+}
+
+function fallbackDownload(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
 }
 
 export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
-  if (!element) {
-    console.error(`Element with id ${elementId} not found`);
-    return;
-  }
+  if (!element) return;
 
   try {
-    // Switch to html-to-image which is much better with modern CSS and borders
     const [jsPDFMod, htmlToImageMod] = await Promise.all([
       import('jspdf'),
       import('html-to-image')
@@ -259,36 +254,25 @@ export async function exportToPdf(elementId: string, filename: string) {
     const jsPDF = jsPDFMod.default;
     const { toPng } = htmlToImageMod;
 
-    // Use pixelRatio: 2 for high quality without CSS scaling artifacts
     const imgData = await toPng(element, {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
       cacheBust: true,
-      style: {
-        // Ensure consistent rendering
-        fontFamily: 'Georgia, serif'
-      }
     });
 
     const pdf = new jsPDF('p', 'mm', 'a4');
-    
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
     
-    // We need to calculate dimensions based on the captured image
     const tempImg = new Image();
     await new Promise((resolve) => {
       tempImg.onload = resolve;
       tempImg.src = imgData;
     });
 
-    const imgWidth = tempImg.width;
-    const imgHeight = tempImg.height;
-    const imgHeightInPDF = (imgHeight * pdfWidth) / imgWidth;
-
+    const imgHeightInPDF = (tempImg.height * pdfWidth) / tempImg.width;
     let heightLeft = imgHeightInPDF;
     let position = 0;
-    const pageHeight = pdfHeight;
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
     pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPDF);
     heightLeft -= pageHeight;
@@ -325,6 +309,5 @@ export async function exportToPdf(elementId: string, filename: string) {
     }
   } catch (error) {
     console.error("PDF Export failed:", error);
-    throw error;
   }
 }

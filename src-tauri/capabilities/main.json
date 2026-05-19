@@ -23,6 +23,8 @@
     "notification:allow-is-permission-granted",
     "fs:allow-read",
     "fs:allow-write",
-    "fs:allow-exists"
+    "fs:allow-exists",
+    "fs:write-all",
+    "fs:read-all"
   ]
 }

@@ -1,7 +1,7 @@
 {
-  "productName": "PatentScribe",
+  "productName": "PatentMate",
   "version": "../package.json",
-  "identifier": "com.patentscribe.app",
+  "identifier": "com.patentmate.app",
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",
@@ -15,9 +15,10 @@
         "fullscreen": false,
         "height": 800,
         "resizable": true,
-        "title": "PatentScribe - AI 专利协作专家",
+        "title": "PatentMate - AI 专利协作专家",
         "width": 1200,
-        "visible": true
+        "visible": true,
+        "maximized": true
       }
     ],
     "security": {
@@ -27,7 +28,7 @@
   "bundle": {
     "active": true,
     "category": "DeveloperTool",
-    "copyright": "Copyright © 2026 PatentScribe",
+    "copyright": "Copyright © 2026 PatentMate",
     "externalBin": [],
     "icon": [
       "icons/32x32.png",
@@ -37,7 +38,7 @@
       "icons/icon.ico"
     ],
     "longDescription": "An AI-powered patent disclosure tool.",
-    "shortDescription": "PatentScribe Desktop",
+    "shortDescription": "PatentMate Desktop",
     "targets": "all"
   },
   "plugins": {

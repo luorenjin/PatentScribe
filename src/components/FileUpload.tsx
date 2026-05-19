@@ -23,42 +23,87 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (file.type.startsWith('image/')) {
-          imageFiles.push(file);
-        } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-          // Dynamic import mammoth
-          const mammoth = await import('mammoth');
-          const arrayBuffer = await file.arrayBuffer();
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          combinedText += result.value + '\n\n';
-        } else if (file.type === 'text/plain') {
-          const text = await file.text();
-          combinedText += text + '\n\n';
-        } else if (file.type === 'application/pdf') {
-          // Dynamic import pdfjs
-          const pdfjs = await import('pdfjs-dist');
-          // @ts-ignore
-          const pdfWorker = await import('pdfjs-dist/build/pdf.worker.mjs?url');
-          pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker.default;
+        const fileName = file.name.toLowerCase();
+        const fileType = file.type;
 
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-          for (let p = 1; p <= pdf.numPages; p++) {
-            const page = await pdf.getPage(p);
-            const content = await page.getTextContent();
-            const strings = content.items.map((item: any) => item.str);
-            combinedText += strings.join(' ') + '\n';
+        // 1. Handle Images (Multimodal)
+        if (fileType.startsWith('image/')) {
+          imageFiles.push(file);
+          continue;
+        }
+
+        // 2. Handle Word Documents (.docx)
+        if (
+          fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+          fileName.endsWith('.docx')
+        ) {
+          try {
+            const mammoth = await import('mammoth');
+            const arrayBuffer = await file.arrayBuffer();
+            // extractRawText is faster and cleaner for technical extraction
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            combinedText += `[文件: ${file.name}]\n${result.value}\n\n`;
+          } catch (err) {
+            console.error("Mammoth parsing failed:", err);
+            throw new Error(`无法解析 Word 文档 ${file.name}，请确保其不是加密文档。`);
           }
+          continue;
+        }
+
+        // 3. Handle Legacy Word Documents (.doc)
+        if (fileType === 'application/msword' || fileName.endsWith('.doc')) {
+          // Note: Browser-side .doc parsing is extremely limited. 
+          // We suggest conversion or use a fallback if available.
+          combinedText += `[注意: 检测到旧版 .doc 文件 ${file.name}，建议将其另存为 .docx 以获得最佳解析效果]\n`;
+          // For now, treat as potentially binary and warn, or try a basic text sweep (though rarely useful for OLE files)
+          continue;
+        }
+
+        // 4. Handle Text Files
+        if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+          const text = await file.text();
+          combinedText += `[文件: ${file.name}]\n${text}\n\n`;
+          continue;
+        }
+
+        // 5. Handle PDF Files
+        if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+          try {
+            const pdfjs = await import('pdfjs-dist');
+            // Fix worker path for Vite/Tauri
+            const workerUrl = new URL(
+              'pdfjs-dist/build/pdf.worker.mjs',
+              import.meta.url
+            ).toString();
+            pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+            let pdfText = `[文件: ${file.name}]\n`;
+            for (let p = 1; p <= pdf.numPages; p++) {
+              const page = await pdf.getPage(p);
+              const content = await page.getTextContent();
+              const strings = content.items.map((item: any) => item.str);
+              pdfText += strings.join(' ') + '\n';
+            }
+            combinedText += pdfText + '\n\n';
+          } catch (err) {
+            console.error("PDF parsing failed:", err);
+            throw new Error(`PDF 解析失败: ${file.name}`);
+          }
+          continue;
         }
       }
 
       if (!combinedText.trim() && imageFiles.length === 0) {
-        throw new Error("Unable to extract content. Supported formats: .docx, .pdf, .txt, images");
+        throw new Error("未能提取到有效内容。支持格式：.docx, .pdf, .txt 以及各类图片。");
       }
 
       onContentUpload(combinedText.trim(), imageFiles);
-    } catch (error) {
+    } catch (error: any) {
       console.error("File processing error:", error);
+      // Alert user with a more friendly message
+      alert(error.message || "文件处理出错，请尝试转换格式后重新上传。");
     } finally {
       setIsProcessing(false);
     }
@@ -110,7 +155,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
           >
             <Logo size={80} className="shadow-2xl shadow-indigo-200" />
           </motion.div>
-          <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 border-b-4 border-indigo-600 inline-block px-2">PatentScribe AI</h1>          <p className="text-gray-500 text-lg max-w-md mx-auto font-medium">
+          <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 border-b-4 border-indigo-600 inline-block px-2">PatentMate AI</h1>          <p className="text-gray-500 text-lg max-w-md mx-auto font-medium">
             多模态 AI 专利交底书搭档
           </p>
         </div>
@@ -131,7 +176,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
             className="hidden" 
             multiple
             onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); }}
-            accept=".docx,.txt,.pdf,image/*"
+            accept=".docx,.doc,.txt,.pdf,image/*"
           />
           
           <div className="space-y-6">
@@ -142,7 +187,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
             </div>
             <div className="space-y-2">
               <p className="text-xl font-bold text-gray-900">点击或将技术初稿/图纸拖拽至此</p>
-              <p className="text-sm text-gray-400 font-medium">支持 文档(.docx/pdf/txt) 及 附图(图纸/照片)</p>
+              <p className="text-sm text-gray-400 font-medium">支持 文档(.docx/.doc/.pdf/.txt) 及 附图(图纸/照片)</p>
             </div>
           </div>
           <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-600/5 rounded-bl-full pointer-events-none" />

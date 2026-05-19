@@ -23,13 +23,14 @@ const VersionHistoryModal = lazy(() => import('./components/VersionHistoryModal'
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 
 const INITIAL_SETTINGS: AppSettings = {
-  llmProvider: 'google',
-  modelId: 'gemini-3-flash-preview',
+  llmProvider: 'builtin',
+  modelId: 'qwen3.6-plus',
   isMultimodalEnabled: true,
   providers: {
+    builtin: { modelId: 'qwen3.6-plus' },
+    qwen: { modelId: 'qwen3.6-plus' },
     google: { modelId: 'gemini-3-flash-preview' },
     openai: { modelId: 'gpt-4o' },
-    qwen: { modelId: 'qwen-max' },
     custom: { modelId: 'custom-model' }
   }
 };
@@ -83,10 +84,16 @@ export default function App() {
         setWorkbenchRecords(records || []);
 
         // Check if onboarding is needed
-        const provider = finalSettings.llmProvider;
-        const apiKey = finalSettings.providers?.[provider]?.apiKey || (finalSettings as any).apiKey;
-        if (!apiKey) {
+        const forceOnboarding = import.meta.env.VITE_DEBUG_SHOW_ONBOARDING === 'true';
+        
+        if (forceOnboarding || !savedSettings) {
           setShowOnboarding(true);
+        } else {
+          const provider = finalSettings.llmProvider;
+          const apiKey = finalSettings.providers?.[provider]?.apiKey || (finalSettings as any).apiKey;
+          if (!apiKey && provider !== 'builtin') {
+            setShowOnboarding(true);
+          }
         }
       } catch (error) {
         console.error('Failed to initialize storage:', error);
@@ -338,7 +345,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
         >
           <Logo size={32} className="shadow-lg shadow-indigo-900/20 group-hover:scale-110 transition-transform" />
           <div className="flex items-baseline gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-white font-serif group-hover:text-indigo-300 transition-colors">PatentScribe AI</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white font-serif group-hover:text-indigo-300 transition-colors">PatentMate AI</h1>
           </div>
         </div>
 
@@ -510,7 +517,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
           </button>
         </div>
         <div className="flex items-center gap-4">
-          <div>Copyright © 2026 PatentScribe. All Rights Reserved.</div>
+          <div>Copyright © 2026 PatentMate. All Rights Reserved.</div>
           {appVersion && <div className="text-indigo-500/80 font-bold">v{appVersion}</div>}
         </div>
       </footer>
@@ -579,7 +586,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
                     取消
                   </button>
                   <a
-                    href="mailto:luorenjin@126.com?subject=PatentScribe Feedback (Bug/Feature Request)"
+                    href="mailto:luorenjin@126.com?subject=PatentMate Feedback (Bug/Feature Request)"
                     onClick={() => setIsFeedbackOpen(false)}
                     className="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all text-center shadow-lg shadow-indigo-200"
                   >

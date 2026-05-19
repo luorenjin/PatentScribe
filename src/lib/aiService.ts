@@ -37,34 +37,46 @@ const SYSTEM_PROMPT = `你是一位资深专利工程师与专利代理人协作
 // --- Provider Configs & Defaults ---
 
 const DEFAULT_CONFIGS: Record<string, { model: string; backupModel: string; apiEndpoint?: string }> = {
+  builtin: {
+    model: "qwen3.6-plus",
+    backupModel: "qwen3.6-flash",
+    apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  },
   google: {
     model: "gemini-3-flash-preview",
-    backupModel: "gemini-2.0-flash-exp",
+    backupModel: "gemini-3.1-flash-lite",
   },
   openai: {
-    model: "gpt-4o",
-    backupModel: "gpt-5",
+    model: "gpt-5.4",
+    backupModel: "gpt-5.4-mini",
     apiEndpoint: "https://api.openai.com/v1",
   },
   qwen: {
-    model: "qwen3.5-plus-2026-04-20",
-    backupModel: "qwen3.5-122b-a10b",
+    model: "qwen3.6-plus",
+    backupModel: "qwen3.6-flash",
     apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   }
 };
 
 function getModelId(settings: AppSettings, task: 'analyze' | 'others'): string {
-  const provider = settings.llmProvider || 'google';
+  const provider = settings.llmProvider || 'builtin';
   const providerConfig = settings.providers?.[provider];
   if (providerConfig?.modelId) return providerConfig.modelId;
   if (settings.modelId) return settings.modelId;
-  const config = DEFAULT_CONFIGS[provider] || DEFAULT_CONFIGS.google;
+  const config = DEFAULT_CONFIGS[provider] || DEFAULT_CONFIGS.builtin;
   return task === 'analyze' ? config.model : config.backupModel;
 }
 
 function getCredentials(settings: AppSettings) {
-  const provider = settings.llmProvider || 'google';
+  const provider = settings.llmProvider || 'builtin';
   const providerConfig = settings.providers?.[provider];
+
+  if (provider === 'builtin') {
+    return {
+      apiKey: (import.meta as any).env.VITE_QWEN_API_KEY || '',
+      apiEndpoint: DEFAULT_CONFIGS.builtin.apiEndpoint
+    };
+  }
 
   return {
     apiKey: providerConfig?.apiKey || settings.apiKey,
@@ -291,7 +303,7 @@ function normalizeDisclosure(data: any): PatentDisclosure {
 class GoogleProvider implements LLMProvider {
   private async getClient(settings: AppSettings) {
     const { apiKey } = getCredentials(settings);
-    const key = apiKey || (import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY) || '';
+    const key = apiKey || ((import.meta as any).env.VITE_GEMINI_API_KEY || (process.env as any).GEMINI_API_KEY) || '';
     if (!key) throw new Error("Google Gemini API Key is missing");
 
     const { GoogleGenAI } = await import("@google/genai");
@@ -537,7 +549,7 @@ class OpenAIProvider implements LLMProvider {
     const config = DEFAULT_CONFIGS[provider] || DEFAULT_CONFIGS.openai;
     const { apiKey, apiEndpoint } = getCredentials(settings);
 
-    const finalApiKey = apiKey || (provider === 'openai' ? import.meta.env.VITE_OPENAI_API_KEY : import.meta.env.VITE_QWEN_API_KEY) || '';
+    const finalApiKey = apiKey || (provider === 'openai' ? (import.meta as any).env.VITE_OPENAI_API_KEY : (import.meta as any).env.VITE_QWEN_API_KEY) || '';
 
     if (!finalApiKey) throw new Error(`${provider} API Key is missing`);
 
@@ -693,16 +705,17 @@ function getProvider(llmProvider: string): LLMProvider {
     case 'openai':
     case 'qwen':
     case 'custom':
+    case 'builtin':
       return new OpenAIProvider();
     default:
-      return new GoogleProvider();
+      return new OpenAIProvider();
   }
 }
 
 export async function analyzeDraft(content: string, files: File[] = [], settings?: AppSettings): Promise<{ diagnosis: DiagnosisReport; disclosure: PatentDisclosure }> {
-  const provider = getProvider(settings?.llmProvider || 'google');
+  const provider = getProvider(settings?.llmProvider || 'builtin');
   try {
-    return await provider.analyze(content, files, settings || { llmProvider: 'google', modelId: 'gemini-1.5-flash', isMultimodalEnabled: true });
+    return await provider.analyze(content, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error: any) {
     console.error("Analysis Failed:", error);
     throw new Error(error.message || "AI Analysis failed");
@@ -710,18 +723,18 @@ export async function analyzeDraft(content: string, files: File[] = [], settings
 }
 
 export async function generateFollowUp(disclosure: PatentDisclosure, diagnosis: DiagnosisReport, history: { role: string; content: string }[], settings?: AppSettings): Promise<string> {
-  const provider = getProvider(settings?.llmProvider || 'google');
+  const provider = getProvider(settings?.llmProvider || 'builtin');
   try {
-    return await provider.generateFollowUp(disclosure, diagnosis, history, settings || { llmProvider: 'google', modelId: 'gemini-1.5-flash', isMultimodalEnabled: true });
+    return await provider.generateFollowUp(disclosure, diagnosis, history, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     return "我已分析完毕，如需进一步修改请随时通知我。";
   }
 }
 
 export async function updateDisclosure(original: PatentDisclosure, history: { role: string; content: string }[], files: File[] = [], settings?: AppSettings): Promise<PatentDisclosure> {
-  const provider = getProvider(settings?.llmProvider || 'google');
+  const provider = getProvider(settings?.llmProvider || 'builtin');
   try {
-    return await provider.updateDisclosure(original, history, files, settings || { llmProvider: 'google', modelId: 'gemini-1.5-flash', isMultimodalEnabled: true });
+    return await provider.updateDisclosure(original, history, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     console.error("Update failed:", error);
     return original;
@@ -736,9 +749,9 @@ export async function reviseSection(
   files: File[] = [],
   settings?: AppSettings
 ): Promise<string> {
-  const provider = getProvider(settings?.llmProvider || 'google');
+  const provider = getProvider(settings?.llmProvider || 'builtin');
   try {
-    return await provider.reviseSection(sectionKey, originalSection, instruction, disclosure, files, settings || { llmProvider: 'google', modelId: 'gemini-1.5-flash', isMultimodalEnabled: true });
+    return await provider.reviseSection(sectionKey, originalSection, instruction, disclosure, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     return originalSection;
   }

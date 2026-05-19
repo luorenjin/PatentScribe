@@ -30,8 +30,17 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
 
   const providers = [
     { 
+      id: 'builtin', 
+      name: '内置', 
+      icon: Sparkles, 
+      color: 'text-indigo-500', 
+      disabled: false,
+      consoleUrl: '',
+      defaultEndpoint: ''
+    },
+    { 
       id: 'qwen', 
-      name: '阿里百炼', 
+      name: '通义千问 (Qwen)', 
       icon: MessageSquare, 
       color: 'text-purple-500', 
       disabled: false,
@@ -52,7 +61,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
       name: 'OpenAI', 
       icon: Zap, 
       color: 'text-emerald-500', 
-      disabled: true,
+      disabled: false,
       consoleUrl: 'https://platform.openai.com/api-keys',
       defaultEndpoint: 'https://api.openai.com/v1'
     },
@@ -70,10 +79,8 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     { id: 'gemini-3-flash-preview', name: 'Gemini 3.1 Flash (Fast & Balanced)', type: 'google' },
     { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Deep Reasoning)', type: 'google' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Advanced Logic)', type: 'google' },
-    { id: 'o1', name: 'OpenAI o1 (Next Gen Reasoning)', type: 'openai' },
-    { id: 'o1-preview', name: 'OpenAI o1 Preview', type: 'openai' },
-    { id: 'o1-mini', name: 'OpenAI o1 Mini', type: 'openai' },
-    { id: 'gpt-5o', name: 'GPT-5o (Omni Performance)', type: 'openai' },
+    { id: 'gpt-5.4', name: 'OpenAI GPT5.4 (Next Gen Reasoning)', type: 'openai' },
+    { id: 'gpt-5.4-mini', name: 'OpenAI GPT5.4 Mini (Preview)', type: 'openai' },
     { id: 'qwen3.6-plus', name: 'Qwen 3.6 Plus (Latest Precision)', type: 'qwen' },
     { id: 'qwen3.6-flash', name: 'Qwen 3.6 Flash (Fast & Powerful)', type: 'qwen' },
     { id: 'qwen3.5-plus', name: 'Qwen 3.5 Plus (Speed & Efficiency)', type: 'qwen' },
@@ -119,7 +126,9 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
     let targetModelId = providerConfig.modelId;
 
     if (!targetModelId) {
-      if (providerId === 'custom') {
+      if (providerId === 'builtin') {
+        targetModelId = 'qwen3.6-plus';
+      } else if (providerId === 'custom') {
         targetModelId = 'custom-model';
       } else {
         const firstModel = models.find(m => m.type === providerId);
@@ -220,7 +229,15 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
                   核心计算引擎 (ENGINE)
                 </label>
                 <div className="space-y-2">
-                  {settings.llmProvider === 'custom' ? (
+                  {settings.llmProvider === 'builtin' ? (
+                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Cpu size={18} className="text-indigo-600" />
+                        <span className="text-sm font-semibold text-indigo-900">内置智能引擎 (Qwen 核心)</span>
+                      </div>
+                      <Sparkles size={16} className="text-indigo-500 animate-pulse" />
+                    </div>
+                  ) : settings.llmProvider === 'custom' ? (
                     <div className="space-y-4">
                       <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">
                         <Terminal size={18} className="text-amber-600 mt-0.5 shrink-0" />
@@ -277,59 +294,75 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
 
               {/* API Credentials */}
               <section className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
-                    接口配置 (API CREDENTIALS)
-                  </label>
-                  {providers.find(p => p.id === settings.llmProvider)?.consoleUrl && (
-                    <a 
-                      href={providers.find(p => p.id === settings.llmProvider)?.consoleUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-indigo-100 shadow-sm transition-all"
-                    >
-                      获取 API KEY
-                      <ExternalLink size={10} />
-                    </a>
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <div className="relative group">
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                      type={showApiKey ? "text" : "password"}
-                      placeholder="请输入 API Key"
-                      value={currentProviderConfig.apiKey || ''}
-                      onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
-                      className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
-                    >
-                      {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                {settings.llmProvider === 'builtin' ? (
+                  <div className="flex items-start gap-3 p-2">
+                    <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600 shrink-0">
+                      <Sparkles size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">开箱即用</h4>
+                      <p className="text-[11px] text-gray-500 leading-relaxed mt-1">
+                        系统正在使用预置的内置大模型引擎。您无需配置任何 API Key 或代理地址即可开始使用全部核心分析功能。如果需要更高级的自定义，请随时切换到其他提供商。
+                      </p>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                      type="text"
-                      placeholder="请输入 API 代理地址 (Endpoint URL)"
-                      value={currentProviderConfig.apiEndpoint || ''}
-                      onChange={(e) => handleUpdateProviderConfig({ apiEndpoint: e.target.value })}
-                      className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-start gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <div className="p-1 bg-indigo-100 rounded text-indigo-600 mt-0.5">
-                    <ShieldCheck size={12} />
-                  </div>
-                  <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
-                    <span className="font-bold underline">安全说明</span>：API Key 已通过 Tauri Store 安全地存储在您的本地文件系统中，不再依赖浏览器的 LocalStorage。
-                  </p>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                        接口配置 (API CREDENTIALS)
+                      </label>
+                      {providers.find(p => p.id === settings.llmProvider)?.consoleUrl && (
+                        <a 
+                          href={providers.find(p => p.id === settings.llmProvider)?.consoleUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-indigo-100 shadow-sm transition-all"
+                        >
+                          获取 API KEY
+                          <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <div className="relative group">
+                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                          type={showApiKey ? "text" : "password"}
+                          placeholder="请输入 API Key"
+                          value={currentProviderConfig.apiKey || ''}
+                          onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                        >
+                          {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                          type="text"
+                          placeholder="请输入 API 代理地址 (Endpoint URL)"
+                          value={currentProviderConfig.apiEndpoint || ''}
+                          onChange={(e) => handleUpdateProviderConfig({ apiEndpoint: e.target.value })}
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-start gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                      <div className="p-1 bg-indigo-100 rounded text-indigo-600 mt-0.5">
+                        <ShieldCheck size={12} />
+                      </div>
+                      <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
+                        <span className="font-bold underline">安全说明</span>：API Key 已通过 Tauri Store 安全地存储在您的本地文件系统中，不再依赖浏览器的 LocalStorage。
+                      </p>
+                    </div>
+                  </>
+                )}
               </section>
 
               {/* Features */}
@@ -367,13 +400,14 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: S
               <button
                 onClick={() => {
                   const defaultSettings: AppSettings = {
-                    llmProvider: 'google',
-                    modelId: 'gemini-3-flash-preview',
+                    llmProvider: 'builtin',
+                    modelId: 'qwen3.6-plus',
                     isMultimodalEnabled: true,
                     providers: {
+                      builtin: { modelId: 'qwen3.6-plus' },
+                      qwen: { modelId: 'qwen3.6-plus' },
                       google: { modelId: 'gemini-3-flash-preview' },
                       openai: { modelId: 'gpt-4o' },
-                      qwen: { modelId: 'qwen-max' },
                       custom: { modelId: 'custom-model' }
                     }
                   };

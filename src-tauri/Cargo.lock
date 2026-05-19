@@ -2742,7 +2742,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "patentscribe"
+name = "patentmate"
 version = "0.1.0"
 dependencies = [
  "serde",

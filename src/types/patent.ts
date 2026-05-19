@@ -62,12 +62,13 @@ export interface ProviderConfig {
 }
 
 export interface AppSettings {
-  llmProvider: 'google' | 'openai' | 'qwen' | 'custom';
+  llmProvider: 'builtin' | 'google' | 'openai' | 'qwen' | 'custom';
   modelId: string;
   isMultimodalEnabled: boolean;
   apiKey?: string; // Legacy/Current (might still be used by some parts)
   apiEndpoint?: string; // Legacy/Current
   providers?: {
+    builtin?: ProviderConfig;
     google?: ProviderConfig;
     openai?: ProviderConfig;
     qwen?: ProviderConfig;

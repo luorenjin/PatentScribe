@@ -1,6 +1,6 @@
-# PatentScribe - AI 专利协作专家
+# PatentMate - AI 专利协作专家
 
-PatentScribe 是一款基于 AI 的专利技术交底书协作工具，旨在协助专利工程师从原始构思中挖掘核心专利点，并自动生成结构化的技术交底书。
+PatentMate 是一款基于 AI 的专利技术交底书协作工具，旨在协助专利工程师从原始构思中挖掘核心专利点，并自动生成结构化的技术交底书。
 
 ## 项目概览 (Project Overview)
 

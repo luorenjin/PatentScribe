@@ -15,14 +15,17 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleFiles = async (files: FileList) => {
+  // Core file processing logic
+  const handleFiles = React.useCallback(async (rawFiles: FileList | File[] | null) => {
+    if (!rawFiles || rawFiles.length === 0) return;
+    const files = Array.from(rawFiles);
+    
     setIsProcessing(true);
     try {
       let combinedText = '';
       const imageFiles: File[] = [];
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      for (const file of files) {
         const fileName = file.name.toLowerCase();
         const fileType = file.type;
 
@@ -40,7 +43,6 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
           try {
             const mammoth = await import('mammoth');
             const arrayBuffer = await file.arrayBuffer();
-            // extractRawText is faster and cleaner for technical extraction
             const result = await mammoth.extractRawText({ arrayBuffer });
             combinedText += `[文件: ${file.name}]\n${result.value}\n\n`;
           } catch (err) {
@@ -52,10 +54,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
 
         // 3. Handle Legacy Word Documents (.doc)
         if (fileType === 'application/msword' || fileName.endsWith('.doc')) {
-          // Note: Browser-side .doc parsing is extremely limited. 
-          // We suggest conversion or use a fallback if available.
           combinedText += `[注意: 检测到旧版 .doc 文件 ${file.name}，建议将其另存为 .docx 以获得最佳解析效果]\n`;
-          // For now, treat as potentially binary and warn, or try a basic text sweep (though rarely useful for OLE files)
           continue;
         }
 
@@ -70,7 +69,6 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
         if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
           try {
             const pdfjs = await import('pdfjs-dist');
-            // Fix worker path for Vite/Tauri
             const workerUrl = new URL(
               'pdfjs-dist/build/pdf.worker.mjs',
               import.meta.url
@@ -83,7 +81,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
             for (let p = 1; p <= pdf.numPages; p++) {
               const page = await pdf.getPage(p);
               const content = await page.getTextContent();
-              const strings = content.items.map((item: any) => item.str);
+              const strings = content.items.map((item: any) => (item as any).str);
               pdfText += strings.join(' ') + '\n';
             }
             combinedText += pdfText + '\n\n';
@@ -102,24 +100,100 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
       onContentUpload(combinedText.trim(), imageFiles);
     } catch (error: any) {
       console.error("File processing error:", error);
-      // Alert user with a more friendly message
       alert(error.message || "文件处理出错，请尝试转换格式后重新上传。");
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [onContentUpload]);
+
+  // Hybrid Drag and Drop Setup (Browser + Tauri Native)
+  React.useEffect(() => {
+    let unlisten: any;
+
+    const initTauriDrop = async () => {
+      try {
+        // Try to import Tauri APIs dynamically to avoid breaking browser mode
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const { readFile } = await import('@tauri-apps/plugin-fs');
+        const win = getCurrentWindow();
+
+        unlisten = await win.onDragDropEvent(async (event) => {
+          if (event.payload.type === 'drop') {
+            setIsDragActive(false);
+            const paths = event.payload.paths;
+            if (paths && paths.length > 0) {
+              const files = await Promise.all(paths.map(async (path) => {
+                const name = path.split(/[\\/]/).pop() || 'file';
+                const bytes = await readFile(path);
+                
+                // Mime type detection by extension (Tauri doesn't give mime for paths)
+                const ext = name.split('.').pop()?.toLowerCase();
+                let type = 'application/octet-stream';
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext!)) type = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+                else if (ext === 'pdf') type = 'application/pdf';
+                else if (ext === 'docx') type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                else if (ext === 'doc') type = 'application/msword';
+                else if (ext === 'txt') type = 'text/plain';
+                
+                return new File([bytes], name, { type });
+              }));
+              handleFiles(files);
+            }
+          } else if (event.payload.type === 'enter' || event.payload.type === 'over') {
+            setIsDragActive(true);
+          } else if (event.payload.type === 'leave' || event.payload.type === 'cancelled') {
+            setIsDragActive(false);
+          }
+        });
+      } catch (e) {
+        // Fallback for browser mode: handled by standard React onDrop below
+        console.debug("Tauri drag-drop API not available, falling back to Web API.");
+      }
+    };
+
+    initTauriDrop();
+    return () => { if (unlisten) unlisten(); };
+  }, [handleFiles]);
 
   const showOverlay = isLoading || isProcessing;
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6 bg-gray-50 relative overflow-hidden">
+    <div 
+      className="h-full flex flex-col items-center justify-center p-6 bg-gray-50 relative overflow-hidden"
+      onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragActive(true); }}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragActive(true); }}
+      onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragActive(false); }}
+      onDrop={(e) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        setIsDragActive(false); 
+        // Note: In Tauri, e.dataTransfer.files is often empty, handled by native listener above
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleFiles(e.dataTransfer.files); 
+        }
+      }}
+    >
       <AnimatePresence>
+        {isDragActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[60] bg-indigo-600/10 backdrop-blur-[2px] border-4 border-dashed border-indigo-600 m-4 rounded-3xl pointer-events-none flex items-center justify-center"
+          >
+            <div className="bg-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3">
+              <FileUp className="text-indigo-600 animate-bounce" size={24} />
+              <span className="text-indigo-600 font-bold text-lg">松开以解析文档内容</span>
+            </div>
+          </motion.div>
+        )}
+        
         {showOverlay && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-4"
+            className="absolute inset-0 z-[70] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-4"
           >
             <div className="relative">
               <motion.div 
@@ -145,7 +219,7 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="z-10 w-full max-w-xl text-center space-y-12"
+        className="z-10 w-full max-w-xl text-center space-y-12 pointer-events-none"
       >
         <div className="space-y-4">
           <motion.div
@@ -161,31 +235,8 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
         </div>
 
         <div
-          onDragEnter={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsDragActive(true);
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsDragActive(true);
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsDragActive(false);
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsDragActive(false);
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-              handleFiles(e.dataTransfer.files);
-            }
-          }}
           className={cn(
-            "relative group cursor-pointer bg-white border border-gray-200 shadow-xl rounded-3xl p-12 transition-all duration-500",
+            "relative group cursor-pointer bg-white border border-gray-200 shadow-xl rounded-3xl p-12 transition-all duration-500 pointer-events-auto",
             isDragActive ? "border-indigo-600 ring-4 ring-indigo-50 -translate-y-2" : "hover:border-indigo-300 hover:-translate-y-1"
           )}
           onClick={() => fileInputRef.current?.click()}
@@ -195,11 +246,11 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
             ref={fileInputRef} 
             className="hidden" 
             multiple
-            onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); }}
+            onChange={(e) => handleFiles(e.target.files)}
             accept=".docx,.doc,.txt,.pdf,image/*"
           />
           
-          <div className="space-y-6 pointer-events-none">
+          <div className="space-y-6">
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <FileUp size={32} />

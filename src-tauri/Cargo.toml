@@ -1,6 +1,6 @@
 [package]
 name = "patentmate"
-version = "0.1.1"
+version = "0.1.2"
 description = "PatentMate AI - 专利技术交底书协作专家"
 authors = ["Luorj <luorj@microviewsz.com>"]
 license = ""

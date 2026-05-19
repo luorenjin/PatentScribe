@@ -1,16 +1,19 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileUp, Zap, Layout, ImagePlus } from 'lucide-react';
+import { FileUp, Zap, Layout, ImagePlus, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Logo } from './Logo';
 import { ParticleBackground } from './ParticleBackground';
+import { ACTIVATION_CONFIG } from '../config/activation';
 
 interface FileUploadProps {
   onContentUpload: (content: string, files: File[]) => void;
   isLoading: boolean;
+  isActivated: boolean;
+  onOpenActivation: () => void;
 }
 
-export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
+export function FileUpload({ onContentUpload, isLoading, isActivated, onOpenActivation }: FileUploadProps) {
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -18,6 +21,13 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
   // Core file processing logic
   const handleFiles = React.useCallback(async (rawFiles: FileList | File[] | null) => {
     if (!rawFiles || rawFiles.length === 0) return;
+
+    // Check activation
+    if (ACTIVATION_CONFIG.REQUIRE_ACTIVATION && !isActivated) {
+      onOpenActivation();
+      return;
+    }
+
     const files = Array.from(rawFiles);
     
     setIsProcessing(true);
@@ -118,11 +128,12 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
         const win = getCurrentWindow();
 
         unlisten = await win.onDragDropEvent(async (event) => {
-          if (event.payload.type === 'drop') {
+          const payload = event.payload as any;
+          if (payload.type === 'drop') {
             setIsDragActive(false);
-            const paths = event.payload.paths;
+            const paths = payload.paths;
             if (paths && paths.length > 0) {
-              const files = await Promise.all(paths.map(async (path) => {
+              const files = await Promise.all(paths.map(async (path: string) => {
                 const name = path.split(/[\\/]/).pop() || 'file';
                 const bytes = await readFile(path);
                 
@@ -139,9 +150,9 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
               }));
               handleFiles(files);
             }
-          } else if (event.payload.type === 'enter' || event.payload.type === 'over') {
+          } else if (payload.type === 'enter' || payload.type === 'over') {
             setIsDragActive(true);
-          } else if (event.payload.type === 'leave' || event.payload.type === 'cancelled') {
+          } else if (payload.type === 'leave' || payload.type === 'cancelled') {
             setIsDragActive(false);
           }
         });
@@ -216,6 +227,22 @@ export function FileUpload({ onContentUpload, isLoading }: FileUploadProps) {
       </AnimatePresence>
       <ParticleBackground />
       
+      {/* Activation Status Badge */}
+      <div className="absolute top-6 right-6 z-20">
+        <button
+          onClick={onOpenActivation}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg",
+            isActivated 
+              ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+              : "bg-amber-50 text-amber-600 border border-amber-100 hover:scale-105"
+          )}
+        >
+          {isActivated ? <ShieldCheck size={14} /> : <ShieldAlert size={14} className="animate-pulse" />}
+          {isActivated ? "已激活 (专业版)" : "未激活 (需授权)"}
+        </button>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

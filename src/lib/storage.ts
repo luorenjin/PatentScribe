@@ -26,6 +26,25 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   }
 }
 
+// --- Activation Storage ---
+export async function saveActivation(licenseData: string): Promise<void> {
+  try {
+    await store.set("license_data", licenseData);
+    await store.save();
+  } catch (error) {
+    console.error("Failed to save activation data", error);
+  }
+}
+
+export async function loadActivation(): Promise<string | null> {
+  try {
+    const data = await store.get("license_data");
+    return data as string | null;
+  } catch (error) {
+    return null;
+  }
+}
+
 // --- Relational Data (SQLite) ---
 let db: Database | null = null;
 

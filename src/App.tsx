@@ -22,6 +22,7 @@ const Workbench = lazy(() => import('./components/Workbench').then(m => ({ defau
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const VersionHistoryModal = lazy(() => import('./components/VersionHistoryModal').then(m => ({ default: m.VersionHistoryModal })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const ActivationModal = lazy(() => import('./components/ActivationModal').then(m => ({ default: m.ActivationModal })));
 
 const INITIAL_SETTINGS: AppSettings = {
   llmProvider: 'builtin',
@@ -60,6 +61,8 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = React.useState(false);
   const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [isActivationOpen, setIsActivationOpen] = React.useState(false);
+  const [isActivated, setIsActivated] = React.useState(false);
   const [isAppReady, setIsAppReady] = React.useState(false);
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'saved'>('idle');
   const [appVersion, setAppVersion] = React.useState<string>('');
@@ -67,12 +70,27 @@ export default function App() {
   // Initialize Workbench and Settings from native storage
   React.useEffect(() => {
     async function initializeApp() {
-      // 1. Parallel load Settings and Workbench
+      // 1. Parallel load Settings, Workbench and Activation
       try {
-        const [savedSettings, records] = await Promise.all([
+        const { loadActivation } = await import('./lib/storage');
+        const { invoke } = await import('@tauri-apps/api/core');
+        
+        const [savedSettings, records, licenseData] = await Promise.all([
           loadSettings(),
-          loadWorkbenchRecords()
+          loadWorkbenchRecords(),
+          loadActivation()
         ]);
+
+        // Verify activation
+        if (licenseData) {
+          try {
+            const machineCode = await invoke<string>('get_machine_code');
+            const isValid = await invoke<boolean>('verify_license', { licenseData, machineCode });
+            setIsActivated(isValid);
+          } catch (e) {
+            console.error('Activation verification failed:', e);
+          }
+        }
 
         let finalSettings = INITIAL_SETTINGS;
         if (savedSettings) {
@@ -448,7 +466,12 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
                 exit={{ opacity: 0 }}
                 className="w-full h-full"
               >
-                <FileUpload onContentUpload={handleInitialUpload} isLoading={state.isAnalyzing} />
+                <FileUpload 
+                  onContentUpload={handleInitialUpload} 
+                  isLoading={state.isAnalyzing} 
+                  isActivated={isActivated}
+                  onOpenActivation={() => setIsActivationOpen(true)}
+                />
               </motion.div>
             ) : state.status === 'workbench' ? (
               <motion.div
@@ -545,6 +568,13 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
             onClose={() => setIsHistoryOpen(false)}
             versions={state.versionHistory}
             onRevert={handleRevertVersion}
+          />
+        )}
+        {isActivationOpen && (
+          <ActivationModal
+            isOpen={isActivationOpen}
+            onClose={() => setIsActivationOpen(false)}
+            onActivated={() => setIsActivated(true)}
           />
         )}
       </Suspense>

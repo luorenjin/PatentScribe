@@ -1,6 +1,6 @@
 [package]
 name = "patentmate"
-version = "0.1.2"
+version = "0.1.3"
 description = "PatentMate AI - 专利技术交底书协作专家"
 authors = ["Luorj <luorj@microviewsz.com>"]
 license = ""
@@ -21,6 +21,14 @@ tauri-plugin-shell = { version = "2.0" }
 tauri-plugin-dialog = { version = "2.0" }
 tauri-plugin-notification = { version = "2.0" }
 tauri-plugin-fs = { version = "2.0" }
+machine-uid = "0.3"
+sha2 = "0.10"
+rsa = { version = "0.9", features = ["sha2", "pem"] }
+base64 = "0.21"
+hex = "0.4"
+dotenvy = "0.15"
+
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

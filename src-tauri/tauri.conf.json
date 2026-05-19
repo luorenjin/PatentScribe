@@ -2,7 +2,7 @@
   "productName": "PatentMate",
   "mainBinaryName": "PatentMate",
   "version": "../package.json",
-  "identifier": "com.patentmate.app",
+  "identifier": "com.microviewsz.patentmate.desktop",
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",

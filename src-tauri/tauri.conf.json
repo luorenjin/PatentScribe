@@ -39,8 +39,14 @@
       "icons/icon.ico"
     ],
     "longDescription": "PatentMate AI - 专利技术交底书协作专家。由 MicroView 开发，旨在通过 AI 技术协助专利工程师进行高效挖掘与文档生成。",
+    "publisher": "MicroView",
     "shortDescription": "PatentMate AI by MicroView",
-    "targets": "all"
+    "targets": "all",
+    "windows": {
+      "wix": {
+        "template": "./windows/main.wxs"
+      }
+    }
   },
   "plugins": {
     "sql": null,

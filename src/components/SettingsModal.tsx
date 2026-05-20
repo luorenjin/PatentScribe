@@ -35,7 +35,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
 
   React.useEffect(() => {
     if (isOpen) {
-      const { invoke } = import('@tauri-apps/api/core').then(m => {
+      import('@tauri-apps/api/core').then(m => {
         m.invoke<string>('get_machine_code').then(setMachineCode).catch(console.error);
       });
     }

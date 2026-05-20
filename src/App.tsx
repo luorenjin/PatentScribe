@@ -13,13 +13,14 @@ import { cn } from './lib/utils';
 import { WorkbenchRecord, AppSettings } from './types/patent';
 import { DEFAULT_PROVIDER_CONFIGS } from './config/models';
 import { loadSettings, saveSettings, loadWorkbenchRecords, saveWorkbenchRecord, deleteWorkbenchRecord } from './lib/storage';
-import { Loader2, MessageSquare, Save, CheckCircle, Archive, Plus, Settings, Clock } from 'lucide-react';
+import { Loader2, MessageSquare, Save, CheckCircle, Archive, Plus, Settings, Clock, HelpCircle } from 'lucide-react';
 
 // Lazy load heavy components
 const ChatPane = lazy(() => import('./components/ChatPane').then(m => ({ default: m.ChatPane })));
 const PreviewPane = lazy(() => import('./components/PreviewPane').then(m => ({ default: m.PreviewPane })));
 const Workbench = lazy(() => import('./components/Workbench').then(m => ({ default: m.Workbench })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const HelpCenterModal = lazy(() => import('./components/HelpCenterModal').then(m => ({ default: m.HelpCenterModal })));
 const VersionHistoryModal = lazy(() => import('./components/VersionHistoryModal').then(m => ({ default: m.VersionHistoryModal })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 const ActivationModal = lazy(() => import('./components/ActivationModal').then(m => ({ default: m.ActivationModal })));
@@ -58,6 +59,7 @@ export default function App() {
   const [state, setState] = React.useState<AppState>(INITIAL_STATE);
   const [workbenchRecords, setWorkbenchRecords] = React.useState<WorkbenchRecord[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [isHelpOpen, setIsHelpOpen] = React.useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = React.useState(false);
   const [showOnboarding, setShowOnboarding] = React.useState(false);
@@ -453,6 +455,14 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
           )}
 
           <button
+            onClick={() => setIsHelpOpen(true)}
+            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white ml-2"
+            title="查看帮助中心 (使用手册)"
+          >
+            <HelpCircle size={18} />
+          </button>
+
+          <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white ml-2"
             title="配置系统设置"
@@ -573,6 +583,12 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
             onOpenActivation={() => setIsActivationOpen(true)}
           />
         )}
+        {isHelpOpen && (
+          <HelpCenterModal
+            isOpen={isHelpOpen}
+            onClose={() => setIsHelpOpen(false)}
+          />
+        )}
         {isHistoryOpen && (
           <VersionHistoryModal
             isOpen={isHistoryOpen}
@@ -621,7 +637,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
                 </p>
                 <div className="bg-gray-50 rounded-xl p-4 mb-8 border border-gray-100">
                   <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">反馈邮箱 (Support Email)</div>
-                  <div className="text-sm font-mono font-bold text-indigo-600">luorenjin@126.com</div>
+                  <div className="text-sm font-mono font-bold text-indigo-600">luorj@microviewsz.com</div>
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button
@@ -631,7 +647,7 @@ ${diagnosis.patentPoints.map((p, i) => `**特征${i + 1}:** ${p.feature}\n**效�
                     取消
                   </button>
                   <a
-                    href="mailto:luorenjin@126.com?subject=PatentMate Feedback (Bug/Feature Request)"
+                    href="mailto:luorj@microviewsz.com?subject=PatentMate Feedback (Bug/Feature Request)"
                     onClick={() => setIsFeedbackOpen(false)}
                     className="flex-1 py-3 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all text-center shadow-lg shadow-indigo-200"
                   >

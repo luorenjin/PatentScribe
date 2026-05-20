@@ -1,7 +1,7 @@
 {
   "name": "patentmate",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Luorj <luorj@microviewsz.com>",
   "publisher": "MicroView",
   "description": "PatentMate AI - 专利技术交底书协作专家",

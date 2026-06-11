@@ -36,25 +36,18 @@ const SYSTEM_PROMPT = `你是一位资深专利工程师与专利代理人协作
 - claims: 权利要求草图 (Claims Map)。必须包含 id, type (independent/dependent), content, dependsOn (if dependent)。请确保 JSON 返回值中，Markdown 的换行符使用 \\n 转义。不要在表格行中间插入 \\n\\n。`;
 
 function getModelId(settings: AppSettings, task: 'analyze' | 'others'): string {
-  const provider = settings.llmProvider || 'builtin';
+  const provider = settings.llmProvider || 'qwen';
   const providerConfig = settings.providers?.[provider];
   if (providerConfig?.modelId) return providerConfig.modelId;
   if (settings.modelId) return settings.modelId;
   
-  const config = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.builtin;
+  const config = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.qwen;
   return task === 'analyze' ? config.mainModel : config.backupModel;
 }
 
 function getCredentials(settings: AppSettings) {
-  const provider = settings.llmProvider || 'builtin';
+  const provider = settings.llmProvider || 'qwen';
   const providerConfig = settings.providers?.[provider];
-
-  if (provider === 'builtin') {
-    return {
-      apiKey: (import.meta as any).env.VITE_QWEN_API_KEY || '',
-      apiEndpoint: DEFAULT_PROVIDER_CONFIGS.builtin.apiEndpoint
-    };
-  }
 
   return {
     apiKey: providerConfig?.apiKey || settings.apiKey,
@@ -281,7 +274,7 @@ function normalizeDisclosure(data: any): PatentDisclosure {
 class GoogleProvider implements LLMProvider {
   private async getClient(settings: AppSettings) {
     const { apiKey } = getCredentials(settings);
-    const key = apiKey || ((import.meta as any).env.VITE_GEMINI_API_KEY || (process.env as any).GEMINI_API_KEY) || '';
+    const key = apiKey || '';
     if (!key) throw new Error("Google Gemini API Key is missing");
 
     const { GoogleGenAI } = await import("@google/genai");
@@ -527,7 +520,7 @@ class OpenAIProvider implements LLMProvider {
     const config = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.openai;
     const { apiKey, apiEndpoint } = getCredentials(settings);
 
-    const finalApiKey = apiKey || (provider === 'openai' ? (import.meta as any).env.VITE_OPENAI_API_KEY : (import.meta as any).env.VITE_QWEN_API_KEY) || '';
+    const finalApiKey = apiKey || '';
 
     if (!finalApiKey) throw new Error(`${provider} API Key is missing`);
 
@@ -659,9 +652,9 @@ function getProvider(llmProvider: string): LLMProvider {
 }
 
 export async function analyzeDraft(content: string, files: File[] = [], settings?: AppSettings): Promise<{ diagnosis: DiagnosisReport; disclosure: PatentDisclosure }> {
-  const provider = getProvider(settings?.llmProvider || 'builtin');
+  const provider = getProvider(settings?.llmProvider || 'qwen');
   try {
-    return await provider.analyze(content, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
+    return await provider.analyze(content, files, settings || { llmProvider: 'qwen', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error: any) {
     console.error("Analysis Failed:", error);
     throw new Error(error.message || "AI Analysis failed");
@@ -669,18 +662,18 @@ export async function analyzeDraft(content: string, files: File[] = [], settings
 }
 
 export async function generateFollowUp(disclosure: PatentDisclosure, diagnosis: DiagnosisReport, history: { role: string; content: string }[], settings?: AppSettings): Promise<string> {
-  const provider = getProvider(settings?.llmProvider || 'builtin');
+  const provider = getProvider(settings?.llmProvider || 'qwen');
   try {
-    return await provider.generateFollowUp(disclosure, diagnosis, history, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
+    return await provider.generateFollowUp(disclosure, diagnosis, history, settings || { llmProvider: 'qwen', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     return "我已分析完毕，如需进一步修改请随时通知我。";
   }
 }
 
 export async function updateDisclosure(original: PatentDisclosure, history: { role: string; content: string }[], files: File[] = [], settings?: AppSettings): Promise<PatentDisclosure> {
-  const provider = getProvider(settings?.llmProvider || 'builtin');
+  const provider = getProvider(settings?.llmProvider || 'qwen');
   try {
-    return await provider.updateDisclosure(original, history, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
+    return await provider.updateDisclosure(original, history, files, settings || { llmProvider: 'qwen', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     console.error("Update failed:", error);
     return original;
@@ -695,9 +688,9 @@ export async function reviseSection(
   files: File[] = [],
   settings?: AppSettings
 ): Promise<string> {
-  const provider = getProvider(settings?.llmProvider || 'builtin');
+  const provider = getProvider(settings?.llmProvider || 'qwen');
   try {
-    return await provider.reviseSection(sectionKey, originalSection, instruction, disclosure, files, settings || { llmProvider: 'builtin', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
+    return await provider.reviseSection(sectionKey, originalSection, instruction, disclosure, files, settings || { llmProvider: 'qwen', modelId: 'qwen3.6-plus', isMultimodalEnabled: true });
   } catch (error) {
     return originalSection;
   }

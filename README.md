@@ -15,7 +15,7 @@ PatentMate 是一个面向专利技术交底书场景的 AI 协作桌面应用�
 - 版本历史：当前会话内自动保留最近 50 个版本，支持回滚到任意保存点。
 - 导出归档：支持导出 DOCX 和 PDF。
 - 授权激活：应用内置机器码校验与许可证验证流程，可按环境变量控制是否强制激活。
-- 多模型接入：支持内置模型、Google Gemini、OpenAI、通义千问，以及兼容 OpenAI 协议的自定义接口。
+- 多模型接入：支持 Google Gemini、OpenAI、通义千问，以及兼容 OpenAI 协议的自定义接口。
 
 ## 技术栈
 
@@ -76,7 +76,6 @@ yarn build:keygen
 
 当前支持的提供商：
 
-- builtin：内置模型通道，默认使用 Qwen 系列模型
 - google：Google Gemini
 - openai：OpenAI
 - qwen：通义千问兼容接口
@@ -84,21 +83,17 @@ yarn build:keygen
 
 当前默认模型策略：
 
-- builtin：qwen3.6-flash-2026-04-16
 - google：gemini-3-flash-preview
 - openai：gpt-5.4
 - qwen：qwen3.6-plus
 
-环境变量支持：
+环境变量说明：
 
-- VITE_QWEN_API_KEY：内置通道或 Qwen 的默认 Key
-- VITE_OPENAI_API_KEY：OpenAI 默认 Key
-- VITE_GEMINI_API_KEY 或 GEMINI_API_KEY：Google Gemini 默认 Key
 - LICENSE_PUBLIC_KEY：桌面端许可证验签公钥
 
 说明：
 
-- 当界面中未填写对应 API Key 时，部分提供商会回退读取环境变量。
+- **本项目不提供内置模型 API Key**。所有用户（包括员工）均需在系统设置或首次启动向导中自行配置 API Key 及其对应的端点地址。
 - custom 模式适合接入企业私有网关、第三方中转服务或自建兼容 OpenAI 协议的模型服务。
 - 是否允许视觉能力由所选模型能力和多模态开关共同决定。
 

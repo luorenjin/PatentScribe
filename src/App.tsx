@@ -26,11 +26,10 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m
 const ActivationModal = lazy(() => import('./components/ActivationModal').then(m => ({ default: m.ActivationModal })));
 
 const INITIAL_SETTINGS: AppSettings = {
-  llmProvider: 'builtin',
-  modelId: DEFAULT_PROVIDER_CONFIGS.builtin.mainModel,
+  llmProvider: 'qwen',
+  modelId: DEFAULT_PROVIDER_CONFIGS.qwen.mainModel,
   isMultimodalEnabled: true,
   providers: {
-    builtin: { modelId: DEFAULT_PROVIDER_CONFIGS.builtin.mainModel },
     qwen: { modelId: DEFAULT_PROVIDER_CONFIGS.qwen.mainModel },
     google: { modelId: DEFAULT_PROVIDER_CONFIGS.google.mainModel },
     openai: { modelId: DEFAULT_PROVIDER_CONFIGS.openai.mainModel },
@@ -119,7 +118,7 @@ export default function App() {
         } else {
           const provider = finalSettings.llmProvider;
           const apiKey = finalSettings.providers?.[provider]?.apiKey || (finalSettings as any).apiKey;
-          if (!apiKey && provider !== 'builtin') {
+          if (!apiKey) {
             setShowOnboarding(true);
           }
         }

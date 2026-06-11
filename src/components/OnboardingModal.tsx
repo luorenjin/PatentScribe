@@ -31,22 +31,12 @@ export function OnboardingModal({ isOpen, settings, onComplete }: OnboardingModa
 
   const providers = [
     { 
-      id: 'builtin', 
-      name: '内置 (快速体验)', 
-      icon: Sparkles, 
-      color: 'text-indigo-500', 
-      disabled: false,
-      consoleUrl: '',
-      defaultEndpoint: '',
-      description: '免配置直接使用，基于通义千问引擎（推荐）'
-    },
-    { 
       id: 'qwen', 
       name: '通义千问 (Qwen)', 
       icon: MessageSquare, 
       color: 'text-purple-500', 
       disabled: false,
-      consoleUrl: 'https://dashscope.console.aliyun.com/apiKey',
+      consoleUrl: 'https://bailian.console.aliyun.com/cn-beijing?tab=model#/api-key',
       defaultEndpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       description: '国内访问稳定，专利文档理解能力强'
     },
@@ -82,7 +72,7 @@ export function OnboardingModal({ isOpen, settings, onComplete }: OnboardingModa
   ];
 
   const currentProviderConfig = currentSettings.providers?.[currentSettings.llmProvider] || {};
-  const isKeyEntered = currentSettings.llmProvider === 'builtin' || !!currentProviderConfig.apiKey?.trim();
+  const isKeyEntered = !!currentProviderConfig.apiKey?.trim();
 
   const handleProviderChange = (providerId: string) => {
     const providerDef = providers.find(p => p.id === providerId);
@@ -90,7 +80,7 @@ export function OnboardingModal({ isOpen, settings, onComplete }: OnboardingModa
     
     let targetModelId = providerConfig.modelId;
     if (!targetModelId) {
-      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.builtin;
+      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.qwen;
       targetModelId = config.mainModel;
     }
 
@@ -207,87 +197,71 @@ export function OnboardingModal({ isOpen, settings, onComplete }: OnboardingModa
                   "space-y-4 transition-all",
                   !currentSettings.llmProvider ? "opacity-30 pointer-events-none" : "opacity-100"
                 )}>
-                  {currentSettings.llmProvider === 'builtin' ? (
-                    <div className="p-8 bg-indigo-50 rounded-3xl border border-indigo-100 flex flex-col items-center justify-center text-center space-y-4">
-                      <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center">
-                        <Sparkles className="text-indigo-500" size={32} />
-                      </div>
-                      <div>
-                        <h4 className="text-lg font-bold text-indigo-900 mb-2">已选择内置引擎</h4>
-                        <p className="text-sm text-indigo-700 max-w-sm mx-auto leading-relaxed">
-                          无需任何配置，即刻体验核心专利分析功能。如需更强定制能力，可随时在设置中切换为自定义 API。
-                        </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                      第二步：配置接口凭证 (API CREDENTIALS)
+                    </label>
+                    {selectedProvider?.consoleUrl && (
+                      <a 
+                        href={selectedProvider.consoleUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1"
+                      >
+                        去获取 API KEY
+                        <ExternalLink size={10} />
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">API Key</div>
+                      <div className="relative group">
+                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                          type={showApiKey ? "text" : "password"}
+                          placeholder="请输入您的 API Key"
+                          value={currentProviderConfig.apiKey || ''}
+                          onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                        >
+                          {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between mb-4">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
-                          第二步：配置接口凭证 (API CREDENTIALS)
-                        </label>
-                        {selectedProvider?.consoleUrl && (
-                          <a 
-                            href={selectedProvider.consoleUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1"
-                          >
-                            去获取 API KEY
-                            <ExternalLink size={10} />
-                          </a>
-                        )}
-                      </div>
 
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-gray-100 space-y-4">
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">API Key</div>
-                          <div className="relative group">
-                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input 
-                              type={showApiKey ? "text" : "password"}
-                              placeholder="请输入您的 API Key"
-                              value={currentProviderConfig.apiKey || ''}
-                              onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
-                              className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowApiKey(!showApiKey)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
-                            >
-                              {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">默认模型 (Model ID)</div>
-                          <div className="relative group">
-                            <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input 
-                              type="text"
-                              placeholder="例如: gemini-3-flash-preview"
-                              value={currentProviderConfig.modelId || ''}
-                              onChange={(e) => handleUpdateProviderConfig({ modelId: e.target.value })}
-                              className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm font-mono text-xs"
-                            />
-                          </div>
-                        </div>
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">默认模型 (Model ID)</div>
+                      <div className="relative group">
+                        <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                          type="text"
+                          placeholder="例如: gemini-3-flash-preview"
+                          value={currentProviderConfig.modelId || ''}
+                          onChange={(e) => handleUpdateProviderConfig({ modelId: e.target.value })}
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm font-mono text-xs"
+                        />
                       </div>
+                    </div>
+                  </div>
 
-                      <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                        <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-600 mt-0.5">
-                          <ShieldCheck size={16} />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xs font-bold text-emerald-900">安全与隐私保障</h4>
-                          <p className="text-[10px] text-emerald-700 leading-relaxed font-medium">
-                            您的 API Key 仅存储在本地设备。我们绝不会在云端存储您的任何接口凭证或原始专利交底内容。
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-600 mt-0.5">
+                      <ShieldCheck size={16} />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-emerald-900">安全与隐私保障</h4>
+                      <p className="text-[10px] text-emerald-700 leading-relaxed font-medium">
+                        您的 API Key 仅存储在本地设备。我们绝不会在云端存储您的任何接口凭证或原始专利交底内容。
+                      </p>
+                    </div>
+                  </div>
                 </section>
               </div>
             </div>

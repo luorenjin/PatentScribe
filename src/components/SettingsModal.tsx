@@ -18,6 +18,7 @@ import {
 import { AppSettings, ProviderConfig } from '../types/patent';
 import { cn } from '../lib/utils';
 import { AVAILABLE_MODELS, DEFAULT_PROVIDER_CONFIGS } from '../config/models';
+import { ACTIVATION_CONFIG } from '../config/activation';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -43,22 +44,13 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
 
   const providers = [
     { 
-      id: 'builtin', 
-      name: '内置', 
-      icon: Sparkles, 
-      color: 'text-indigo-500', 
-      disabled: false,
-      consoleUrl: '',
-      defaultEndpoint: ''
-    },
-    { 
       id: 'qwen', 
       name: '通义千问 (Qwen)', 
       icon: MessageSquare, 
       color: 'text-purple-500', 
       disabled: false,
-      consoleUrl: 'https://dashscope.console.aliyun.com/apiKey',
-      defaultEndpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+      consoleUrl: 'https://bailian.console.aliyun.com/cn-beijing?tab=model#/api-key',
+      defaultEndpoint: 'https://dashscope.aliyuncs.com/aliyuncs.com/compatible-mode/v1'
     },
     { 
       id: 'google', 
@@ -126,7 +118,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
     let targetModelId = providerConfig.modelId;
 
     if (!targetModelId) {
-      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.builtin;
+      const config = DEFAULT_PROVIDER_CONFIGS[providerId] || DEFAULT_PROVIDER_CONFIGS.qwen;
       targetModelId = config.mainModel;
     }
 
@@ -223,15 +215,7 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
                   核心计算引擎 (ENGINE)
                 </label>
                 <div className="space-y-2">
-                  {settings.llmProvider === 'builtin' ? (
-                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Cpu size={18} className="text-indigo-600" />
-                        <span className="text-sm font-semibold text-indigo-900">内置智能引擎 (Qwen 核心)</span>
-                      </div>
-                      <Sparkles size={16} className="text-indigo-500 animate-pulse" />
-                    </div>
-                  ) : settings.llmProvider === 'custom' ? (
+                  {settings.llmProvider === 'custom' ? (
                     <div className="space-y-4">
                       <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">
                         <Terminal size={18} className="text-amber-600 mt-0.5 shrink-0" />
@@ -288,75 +272,59 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
 
               {/* API Credentials */}
               <section className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                {settings.llmProvider === 'builtin' ? (
-                  <div className="flex items-start gap-3 p-2">
-                    <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600 shrink-0">
-                      <Sparkles size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-900">开箱即用</h4>
-                      <p className="text-[11px] text-gray-500 leading-relaxed mt-1">
-                        系统正在使用预置的内置大模型引擎。您无需配置任何 API Key 或代理地址即可开始使用全部核心分析功能。如果需要更高级的自定义，请随时切换到其他提供商。
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between mb-4">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                    接口配置 (API CREDENTIALS)
+                  </label>
+                  {providers.find(p => p.id === settings.llmProvider)?.consoleUrl && (
+                    <a 
+                      href={providers.find(p => p.id === settings.llmProvider)?.consoleUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-indigo-100 shadow-sm transition-all"
+                    >
+                      获取 API KEY
+                      <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <div className="relative group">
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type={showApiKey ? "text" : "password"}
+                      placeholder="请输入 API Key"
+                      value={currentProviderConfig.apiKey || ''}
+                      onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
+                      className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                    >
+                      {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between mb-4">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
-                        接口配置 (API CREDENTIALS)
-                      </label>
-                      {providers.find(p => p.id === settings.llmProvider)?.consoleUrl && (
-                        <a 
-                          href={providers.find(p => p.id === settings.llmProvider)?.consoleUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-indigo-100 shadow-sm transition-all"
-                        >
-                          获取 API KEY
-                          <ExternalLink size={10} />
-                        </a>
-                      )}
-                    </div>
-                    <div className="space-y-3">
-                      <div className="relative group">
-                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input 
-                          type={showApiKey ? "text" : "password"}
-                          placeholder="请输入 API Key"
-                          value={currentProviderConfig.apiKey || ''}
-                          onChange={(e) => handleUpdateProviderConfig({ apiKey: e.target.value })}
-                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowApiKey(!showApiKey)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
-                        >
-                          {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input 
-                          type="text"
-                          placeholder="请输入 API 代理地址 (Endpoint URL)"
-                          value={currentProviderConfig.apiEndpoint || ''}
-                          onChange={(e) => handleUpdateProviderConfig({ apiEndpoint: e.target.value })}
-                          className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-start gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                      <div className="p-1 bg-indigo-100 rounded text-indigo-600 mt-0.5">
-                        <ShieldCheck size={12} />
-                      </div>
-                      <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
-                        <span className="font-bold underline">安全说明</span>：API Key 已通过 Tauri Store 安全地存储在您的本地文件系统中，不再依赖浏览器的 LocalStorage。
-                      </p>
-                    </div>
-                  </>
-                )}
+                  <div className="relative">
+                    <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="text"
+                      placeholder="请输入 API 代理地址 (Endpoint URL)"
+                      value={currentProviderConfig.apiEndpoint || ''}
+                      onChange={(e) => handleUpdateProviderConfig({ apiEndpoint: e.target.value })}
+                      className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-start gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div className="p-1 bg-indigo-100 rounded text-indigo-600 mt-0.5">
+                    <ShieldCheck size={12} />
+                  </div>
+                  <p className="text-[10px] text-indigo-700 leading-relaxed font-medium">
+                    <span className="font-bold underline">安全说明</span>：API Key 已通过 Tauri Store 安全地存储在您的本地文件系统中，不再依赖浏览器的 LocalStorage。
+                  </p>
+                </div>
               </section>
 
               {/* Features */}
@@ -390,73 +358,74 @@ export function SettingsModal({ isOpen, onClose, settings, onUpdateSettings, isA
               </section>
 
               {/* Software License Information */}
-              <section className="bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100/50">
-                <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-4 block">
-                  软件授权状态 (LICENSE)
-                </label>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-2 rounded-xl border shadow-sm",
-                        isActivated ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-amber-50 border-amber-100 text-amber-600"
-                      )}>
-                        <ShieldCheck size={18} />
+              {ACTIVATION_CONFIG.REQUIRE_ACTIVATION && (
+                <section className="bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100/50">
+                  <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-4 block">
+                    软件授权状态 (LICENSE)
+                  </label>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-xl border shadow-sm",
+                          isActivated ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-amber-50 border-amber-100 text-amber-600"
+                        )}>
+                          <ShieldCheck size={18} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-gray-900">
+                            {isActivated ? "已激活 (专业版)" : "试用模式 (受限)"}
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            {isActivated ? `授权有效期至: ${expiryDate || '永久'}` : "部分功能需要激活后使用"}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold text-gray-900">
-                          {isActivated ? "已激活 (专业版)" : "试用模式 (受限)"}
-                        </div>
-                        <div className="text-[10px] text-gray-500">
-                          {isActivated ? `授权有效期至: ${expiryDate || '永久'}` : "部分功能需要激活后使用"}
-                        </div>
+                      {!isActivated && (
+                        <button 
+                          onClick={() => {
+                            onClose();
+                            onOpenActivation();
+                          }}
+                          className="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-all"
+                        >
+                          立即激活
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="pt-2 border-t border-indigo-100/50">
+                      <div className="text-[10px] font-bold text-indigo-400/80 uppercase mb-2">本机机器码</div>
+                      <div className="flex items-center justify-between bg-white border border-indigo-100/50 rounded-lg px-3 py-2 font-mono text-[11px] text-indigo-900 shadow-inner">
+                        <span>{machineCode}</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(machineCode);
+                            alert('机器码已复制');
+                          }}
+                          className="text-indigo-600 hover:text-indigo-700 font-bold"
+                        >
+                          复制
+                        </button>
                       </div>
                     </div>
-                    {!isActivated && (
-                      <button 
-                        onClick={() => {
-                          onClose();
-                          onOpenActivation();
-                        }}
-                        className="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-all"
-                      >
-                        立即激活
-                      </button>
-                    )}
                   </div>
-                  
-                  <div className="pt-2 border-t border-indigo-100/50">
-                    <div className="text-[10px] font-bold text-indigo-400/80 uppercase mb-2">本机机器码</div>
-                    <div className="flex items-center justify-between bg-white border border-indigo-100/50 rounded-lg px-3 py-2 font-mono text-[11px] text-indigo-900 shadow-inner">
-                      <span>{machineCode}</span>
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(machineCode);
-                          alert('机器码已复制');
-                        }}
-                        className="text-indigo-600 hover:text-indigo-700 font-bold"
-                      >
-                        复制
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                </section>
+              )}
             </div>
 
             <div className="p-6 bg-gray-50/50 border-t border-gray-100 shrink-0 flex gap-3">
               <button
                 onClick={() => {
                   const defaultSettings: AppSettings = {
-                    llmProvider: 'builtin',
-                    modelId: 'qwen3.6-plus',
+                    llmProvider: 'qwen',
+                    modelId: DEFAULT_PROVIDER_CONFIGS.qwen.mainModel,
                     isMultimodalEnabled: true,
                     providers: {
-                      builtin: { modelId: 'qwen3.6-plus' },
-                      qwen: { modelId: 'qwen3.6-plus' },
-                      google: { modelId: 'gemini-3-flash-preview' },
-                      openai: { modelId: 'gpt-4o' },
-                      custom: { modelId: 'custom-model' }
+                      qwen: { modelId: DEFAULT_PROVIDER_CONFIGS.qwen.mainModel },
+                      google: { modelId: DEFAULT_PROVIDER_CONFIGS.google.mainModel },
+                      openai: { modelId: DEFAULT_PROVIDER_CONFIGS.openai.mainModel },
+                      custom: { modelId: DEFAULT_PROVIDER_CONFIGS.custom.mainModel }
                     }
                   };
                   onUpdateSettings(defaultSettings);

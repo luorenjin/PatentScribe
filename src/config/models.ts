@@ -1,7 +1,7 @@
 export interface ModelInfo {
   id: string;
   name: string;
-  provider: 'google' | 'openai' | 'qwen' | 'builtin' | 'custom';
+  provider: 'google' | 'openai' | 'qwen' | 'custom';
   supportsVision: boolean;
 }
 
@@ -33,11 +33,6 @@ export interface ProviderDefaultConfig {
 }
 
 export const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderDefaultConfig> = {
-  builtin: {
-    mainModel: "qwen3.6-flash-2026-04-16",
-    backupModel: "qwen3.6-plus-2026-04-02",
-    apiEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-  },
   google: {
     mainModel: "gemini-3-flash-preview",
     backupModel: "gemini-3.1-flash-lite", // 保持 aiService.ts 原有逻辑

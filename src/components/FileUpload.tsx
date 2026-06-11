@@ -229,20 +229,22 @@ export function FileUpload({ onContentUpload, isLoading, isActivated, expiryDate
       <ParticleBackground />
       
       {/* Activation Status Badge */}
-      <div className="absolute top-6 right-6 z-20">
-        <button
-          onClick={onOpenActivation}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg",
-            isActivated 
-              ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
-              : "bg-amber-50 text-amber-600 border border-amber-100 hover:scale-105"
-          )}
-        >
-          {isActivated ? <ShieldCheck size={14} /> : <ShieldAlert size={14} className="animate-pulse" />}
-          {isActivated ? `已激活 (有效期至: ${expiryDate || '永久'})` : "未激活 (需授权)"}
-        </button>
-      </div>
+      {ACTIVATION_CONFIG.REQUIRE_ACTIVATION && (
+        <div className="absolute top-6 right-6 z-20">
+          <button
+            onClick={onOpenActivation}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg",
+              isActivated 
+                ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                : "bg-amber-50 text-amber-600 border border-amber-100 hover:scale-105"
+            )}
+          >
+            {isActivated ? <ShieldCheck size={14} /> : <ShieldAlert size={14} className="animate-pulse" />}
+            {isActivated ? `已激活 (有效期至: ${expiryDate || '永久'})` : "未激活 (需授权)"}
+          </button>
+        </div>
+      )}
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
